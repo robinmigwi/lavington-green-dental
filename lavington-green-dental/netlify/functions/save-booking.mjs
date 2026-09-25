@@ -1,4 +1,4 @@
-import { connectLambda, getStore } from "@netlify/blobs";
+import { getStore } from "@netlify/blobs";
 
 export const handler = async (event) => {
   const headers = {
@@ -37,12 +37,14 @@ export const handler = async (event) => {
   const phone = normalizePhone(data.phone);
   const email = clean(data.email, 160);
   const service = clean(data.service, 160);
+  const concern = clean(data.concern, 1200);
+  const suggestedVisit = clean(data.suggested_visit, 160);
   const preferredDate = clean(data.preferred_date, 40);
   const preferredTime = clean(data.preferred_time, 40);
   const feeling = clean(data.feeling, 120);
   const message = clean(data.message, 1200);
 
-  if (!name || !phone || !service || !preferredDate || !preferredTime || !feeling) {
+  if (!name || !phone || !service || !concern || !preferredDate || !preferredTime || !feeling) {
     return {
       statusCode: 400,
       headers,
@@ -50,7 +52,6 @@ export const handler = async (event) => {
     };
   }
 
-  connectLambda(event);
 
   try {
     const store = getStore("appointment-requests");
@@ -64,6 +65,8 @@ export const handler = async (event) => {
       phone,
       email,
       service,
+      suggestedVisit,
+      concern,
       preferredDate,
       preferredTime,
       feeling,
