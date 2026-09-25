@@ -21,7 +21,7 @@
       <li><a href="contact.html">Contact</a></li>
     </ul>
     <div class="navcta">
-      <a class="btn btn-outline" href="tel:+254706820099">Call Us</a>
+      <a class="btn btn-outline" href="#book">Book a visit</a>
       <button class="hamburger" type="button" aria-label="Open menu" aria-expanded="false"><span></span><span></span><span></span></button>
     </div>
   </nav>
@@ -105,6 +105,141 @@
       </article>
     </div>
     <div style="margin-top:30px"><a class="btn btn-outline" href="services.html">See all services →</a></div>
+  </div>
+</section>
+
+<section class="section booking-section" id="book">
+  <div class="container">
+    <div class="booking-shell">
+      <div class="booking-intro">
+        <span class="eyebrow">Ready to book?</span>
+        <h2>Let us make your first step easy.</h2>
+        <p>This is not a long form. We will ask a few simple questions, understand what you need and give the practice a useful picture before you arrive.</p>
+        <div class="booking-promise">
+          <div><span>01</span><strong>Tell us what you need</strong></div>
+          <div><span>02</span><strong>Choose a preferred date and time</strong></div>
+          <div><span>03</span><strong>Tell us how you are feeling about the visit</strong></div>
+        </div>
+      </div>
+
+      <div class="booking-chat" data-booking-chat>
+        <div class="booking-chat-head">
+          <div>
+            <span class="booking-kicker">Appointment request</span>
+            <strong>Let's get your visit started</strong>
+          </div>
+          <span class="booking-step-count" data-booking-count>1 of 6</span>
+        </div>
+
+        <form id="booking-chat-form" name="appointment-request" method="POST" data-netlify="true" netlify-honeypot="booking-bot" novalidate>
+          <input type="hidden" name="form-name" value="appointment-request">
+          <input type="hidden" name="booking-bot">
+          <input type="hidden" name="service" data-booking-service>
+          <input type="hidden" name="feeling" data-booking-feeling>
+          <input type="hidden" name="source" value="Lavington Green Dental Suite website">
+
+          <div class="booking-step active" data-booking-step="1">
+            <div class="chat-bubble clinic-bubble">Hi. What should we call you?</div>
+            <label class="booking-field-label" for="booking-name">Your name</label>
+            <input class="booking-input" id="booking-name" name="name" type="text" autocomplete="name" placeholder="e.g. Sarah Wanjiku">
+            <div class="booking-actions"><button class="btn btn-primary booking-next" type="button">Continue</button></div>
+          </div>
+
+          <div class="booking-step" data-booking-step="2">
+            <div class="chat-bubble clinic-bubble">Thanks, <span data-name-preview>there</span>. How can the team reach you?</div>
+            <label class="booking-field-label" for="booking-phone">Phone number</label>
+            <input class="booking-input" id="booking-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="0700 000 000">
+            <label class="booking-field-label" for="booking-email">Email <span>optional</span></label>
+            <input class="booking-input" id="booking-email" name="email" type="email" autocomplete="email" placeholder="you@example.com">
+            <div class="booking-actions"><button class="booking-back" type="button">Back</button><button class="btn btn-primary booking-next" type="button">Continue</button></div>
+          </div>
+
+          <div class="booking-step" data-booking-step="3">
+            <div class="chat-bubble clinic-bubble">What would you like help with?</div>
+            <div class="booking-choices" data-service-choices>
+              <button type="button" class="booking-choice" data-value="Dental health preventive and promotive services">Check up and prevention</button>
+              <button type="button" class="booking-choice" data-value="General dental treatment">General dental treatment</button>
+              <button type="button" class="booking-choice" data-value="Cosmetic dentistry">Cosmetic dentistry</button>
+              <button type="button" class="booking-choice" data-value="Paediatric dentistry">Paediatric dentistry</button>
+              <button type="button" class="booking-choice" data-value="Orthodontic treatment">Orthodontic treatment</button>
+              <button type="button" class="booking-choice" data-value="Prosthetic dentistry">Prosthetic dentistry</button>
+              <button type="button" class="booking-choice" data-value="Minor oral surgery">Minor oral surgery</button>
+              <button type="button" class="booking-choice" data-value="Not sure yet">I am not sure yet</button>
+            </div>
+            <div class="booking-actions"><button class="booking-back" type="button">Back</button><button class="btn btn-primary booking-next" type="button">Continue</button></div>
+          </div>
+
+          <div class="booking-step" data-booking-step="4">
+            <div class="chat-bubble clinic-bubble">What date and time would you prefer?</div>
+            <div class="booking-date-grid">
+              <div>
+                <label class="booking-field-label" for="booking-date">Preferred date</label>
+                <input class="booking-input" id="booking-date" name="preferred_date" type="date">
+              </div>
+              <div>
+                <label class="booking-field-label" for="booking-time">Preferred time</label>
+                <select class="booking-input" id="booking-time" name="preferred_time">
+                  <option value="">Choose a time</option>
+                  <option>9:00 am</option>
+                  <option>9:30 am</option>
+                  <option>10:00 am</option>
+                  <option>10:30 am</option>
+                  <option>11:00 am</option>
+                  <option>11:30 am</option>
+                  <option>12:00 pm</option>
+                  <option>12:30 pm</option>
+                  <option>1:00 pm</option>
+                  <option>1:30 pm</option>
+                  <option>2:00 pm</option>
+                  <option>2:30 pm</option>
+                  <option>3:00 pm</option>
+                  <option>3:30 pm</option>
+                  <option>4:00 pm</option>
+                  <option>4:30 pm</option>
+                </select>
+              </div>
+            </div>
+            <div class="booking-note">Your preferred time is a request. The practice will confirm the available appointment time.</div>
+            <div class="booking-actions"><button class="booking-back" type="button">Back</button><button class="btn btn-primary booking-next" type="button">Continue</button></div>
+          </div>
+
+          <div class="booking-step" data-booking-step="5">
+            <div class="chat-bubble clinic-bubble">And how are you feeling about the visit?</div>
+            <p class="booking-small-copy">There is no right answer. This helps the team prepare for your visit.</p>
+            <div class="booking-choices" data-feeling-choices>
+              <button type="button" class="booking-choice" data-value="I feel relaxed">I feel relaxed</button>
+              <button type="button" class="booking-choice" data-value="I am a little nervous">I am a little nervous</button>
+              <button type="button" class="booking-choice" data-value="I am very nervous">I am very nervous</button>
+              <button type="button" class="booking-choice" data-value="I am not sure what to expect">I am not sure what to expect</button>
+            </div>
+            <div class="booking-actions"><button class="booking-back" type="button">Back</button><button class="btn btn-primary booking-next" type="button">Continue</button></div>
+          </div>
+
+          <div class="booking-step" data-booking-step="6">
+            <div class="chat-bubble clinic-bubble">Anything else you would like the team to know before your visit?</div>
+            <label class="booking-field-label" for="booking-note">A little more context <span>optional</span></label>
+            <textarea class="booking-input booking-textarea" id="booking-note" name="message" rows="4" placeholder="For example, what prompted you to book or anything that would help us make the visit more comfortable."></textarea>
+
+            <div class="booking-summary" data-booking-summary></div>
+
+            <div class="booking-actions">
+              <button class="booking-back" type="button">Back</button>
+              <button class="btn btn-primary" type="submit" data-booking-submit>Request my appointment</button>
+            </div>
+            <p class="booking-disclaimer">Sending this form sends an appointment request to the practice. It does not confirm a time until the team responds.</p>
+            <a class="booking-whatsapp-fallback" data-booking-whatsapp href="#" target="_blank" rel="noopener" hidden>Send the request on WhatsApp instead</a>
+          </div>
+
+          <div class="booking-success" data-booking-success hidden>
+            <div class="booking-success-icon">✓</div>
+            <span class="eyebrow">Request received</span>
+            <h3>We have the details.</h3>
+            <p>The practice can now review what you need, your preferred time and how you are feeling before confirming the appointment.</p>
+            <a class="btn btn-primary" href="https://wa.me/254706820099" target="_blank" rel="noopener">Chat with the practice on WhatsApp</a>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -282,6 +417,6 @@
 <a class="wa-float" href="https://wa.me/254706820099" target="_blank" rel="noopener" aria-label="Chat on WhatsApp"><svg viewBox="0 0 32 32"><path d="M16 3C9 3 3.3 8.6 3.3 15.5c0 2.4.7 4.6 1.9 6.6L3 29l7.2-2.1c1.9 1 4.1 1.6 6.4 1.6 7 0 12.7-5.6 12.7-12.5S23.5 3 16 3zm0 22.7c-2 0-3.9-.5-5.5-1.5l-.4-.2-4.3 1.3 1.3-4.2-.3-.4c-1.1-1.7-1.2 2.8-1.2 2.8s1.2 3.2 1.4 3.5c.2.3 2.4 3.7 5.9 5.1.8.3 1.5.6 2 .7.8.3 1.6.2 2.2.1.7-.1 2-.8 2.3-1.6.3-.8.3-1.4.2-1.6-.1-.1-.3-.2-.6-.4z"/></svg></a>
 
 <script src="js/main.js"></script>
-<div class="mobile-cta-bar"><a href="tel:+254706820099">☎ <span>Call</span></a><a href="https://wa.me/254706820099" target="_blank" rel="noopener">◉ <span>WhatsApp</span></a><a href="contact.html" class="mcta-book"><span>Book an appointment</span></a></div>
+<div class="mobile-cta-bar"><a href="tel:+254706820099">☎ <span>Call</span></a><a href="https://wa.me/254706820099" target="_blank" rel="noopener">◉ <span>WhatsApp</span></a><a href="#book" class="mcta-book"><span>Book an appointment</span></a></div>
 </body>
 </html>
