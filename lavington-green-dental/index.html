@@ -131,9 +131,8 @@
           <span class="booking-step-count" data-booking-count>1 of 6</span>
         </div>
 
-        <form id="booking-chat-form" name="appointment-request" method="POST" data-netlify="true" netlify-honeypot="booking-bot" novalidate>
-          <input type="hidden" name="form-name" value="appointment-request">
-          <input type="hidden" name="booking-bot">
+        <form id="booking-chat-form" name="appointment-request" novalidate>
+          <input type="text" name="booking_bot" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
           <input type="hidden" name="service" data-booking-service>
           <input type="hidden" name="feeling" data-booking-feeling>
           <input type="hidden" name="source" value="Lavington Green Dental Suite website">
@@ -234,7 +233,7 @@
             <div class="booking-success-icon">✓</div>
             <span class="eyebrow">Request received</span>
             <h3>We have the details.</h3>
-            <p>The practice can now review what you need, your preferred time and how you are feeling before confirming the appointment.</p><p class="booking-success-status" data-booking-whatsapp-success-status></p>
+            <p>The practice can now review what you need, your preferred time and how you are feeling before confirming the appointment.</p><p class="booking-success-status" data-booking-whatsapp-success-status></p><p class="booking-id-status" data-booking-id-status></p>
             <a class="btn btn-primary" href="https://wa.me/254706820099" target="_blank" rel="noopener">Chat with the practice on WhatsApp</a>
           </div>
         </form>
