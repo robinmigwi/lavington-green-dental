@@ -187,3 +187,150 @@ document.addEventListener('DOMContentLoaded', () => {
     window.open('https://wa.me/254706820099?text='+text, '_blank', 'noopener');
   });
 });
+
+/* Conversational appointment request */
+const booking = document.querySelector('[data-booking-chat]');
+if (booking) {
+  const form = document.getElementById('booking-chat-form');
+  const steps = [...booking.querySelectorAll('[data-booking-step]')];
+  const count = booking.querySelector('[data-booking-count]');
+  const nameInput = document.getElementById('booking-name');
+  const phoneInput = document.getElementById('booking-phone');
+  const emailInput = document.getElementById('booking-email');
+  const dateInput = document.getElementById('booking-date');
+  const timeInput = document.getElementById('booking-time');
+  const noteInput = document.getElementById('booking-note');
+  const serviceInput = booking.querySelector('[data-booking-service]');
+  const feelingInput = booking.querySelector('[data-booking-feeling]');
+  const serviceChoices = [...booking.querySelectorAll('[data-service-choices] .booking-choice')];
+  const feelingChoices = [...booking.querySelectorAll('[data-feeling-choices] .booking-choice')];
+  const summary = booking.querySelector('[data-booking-summary]');
+  const success = booking.querySelector('[data-booking-success]');
+  const whatsappFallback = booking.querySelector('[data-booking-whatsapp]');
+  const today = new Date();
+  const localToday = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().split('T')[0];
+
+  if (dateInput) dateInput.min = localToday;
+
+  const showStep = number => {
+    steps.forEach(step => step.classList.toggle('active', Number(step.dataset.bookingStep) === number));
+    if (count) count.textContent = number + ' of ' + steps.length;
+    booking.scrollIntoView({behavior:'smooth', block:'nearest'});
+  };
+
+  const selectedValue = selector => {
+    const selected = selector.find(button => button.classList.contains('selected'));
+    return selected ? selected.dataset.value : '';
+  };
+
+  serviceChoices.forEach(button => button.addEventListener('click', () => {
+    serviceChoices.forEach(item => item.classList.remove('selected'));
+    button.classList.add('selected');
+    if (serviceInput) serviceInput.value = button.dataset.value || '';
+  }));
+
+  feelingChoices.forEach(button => button.addEventListener('click', () => {
+    feelingChoices.forEach(item => item.classList.remove('selected'));
+    button.classList.add('selected');
+    if (feelingInput) feelingInput.value = button.dataset.value || '';
+  }));
+
+  const validateStep = number => {
+    if (number === 1 && !nameInput.value.trim()) {
+      nameInput.focus();
+      return false;
+    }
+    if (number === 2 && !phoneInput.value.trim()) {
+      phoneInput.focus();
+      return false;
+    }
+    if (number === 3 && !selectedValue(serviceChoices)) return false;
+    if (number === 4 && (!dateInput.value || !timeInput.value)) {
+      (!dateInput.value ? dateInput : timeInput).focus();
+      return false;
+    }
+    if (number === 5 && !selectedValue(feelingChoices)) return false;
+    return true;
+  };
+
+  booking.querySelectorAll('.booking-next').forEach(button => button.addEventListener('click', () => {
+    const current = Number(button.closest('[data-booking-step]').dataset.bookingStep);
+    if (!validateStep(current)) {
+      const bubble = button.closest('[data-booking-step]').querySelector('.booking-validation');
+      if (!bubble) {
+        const message = document.createElement('div');
+        message.className = 'booking-error booking-validation';
+        message.textContent = current === 3 ? 'Please choose an option so we can guide your request.' : current === 5 ? 'Tell us how you are feeling about the visit.' : 'Please complete this step before continuing.';
+        button.closest('[data-booking-step]').appendChild(message);
+      }
+      return;
+    }
+    const existing = button.closest('[data-booking-step]').querySelector('.booking-validation');
+    if (existing) existing.remove();
+    if (current === 1) {
+      const preview = booking.querySelector('[data-name-preview]');
+      if (preview) preview.textContent = nameInput.value.trim();
+    }
+    if (current === 5 && summary) {
+      summary.innerHTML = '<strong>Your request</strong><br>Service: ' + escapeHtml(serviceInput.value) +
+        '<br>Date: ' + escapeHtml(dateInput.value) +
+        '<br>Preferred time: ' + escapeHtml(timeInput.value) +
+        '<br>How you are feeling: ' + escapeHtml(feelingInput.value);
+      const message = encodeURIComponent(
+        'Hi Lavington Green Dental Suite, I would like to request an appointment.\n\n' +
+        'Name: ' + nameInput.value.trim() + '\n' +
+        'Phone: ' + phoneInput.value.trim() + '\n' +
+        'Email: ' + (emailInput.value.trim() || 'Not provided') + '\n' +
+        'Service: ' + serviceInput.value + '\n' +
+        'Preferred date: ' + dateInput.value + '\n' +
+        'Preferred time: ' + timeInput.value + '\n' +
+        'How I am feeling: ' + feelingInput.value + '\n' +
+        'More context: ' + (noteInput.value.trim() || 'Not provided')
+      );
+      if (whatsappFallback) {
+        whatsappFallback.href = 'https://wa.me/254706820099?text=' + message;
+        whatsappFallback.hidden = false;
+      }
+    }
+    showStep(current + 1);
+  }));
+
+  booking.querySelectorAll('.booking-back').forEach(button => button.addEventListener('click', () => {
+    const current = Number(button.closest('[data-booking-step]').dataset.bookingStep);
+    showStep(Math.max(1, current - 1));
+  }));
+
+  if (form) form.addEventListener('submit', async event => {
+    event.preventDefault();
+    if (!validateStep(6)) return;
+    const submit = form.querySelector('[data-booking-submit]');
+    const oldText = submit.textContent;
+    submit.disabled = true;
+    submit.textContent = 'Sending…';
+
+    const body = new URLSearchParams(new FormData(form));
+    try {
+      const response = await fetch('/', {
+        method:'POST',
+        headers:{'Content-Type':'application/x-www-form-urlencoded'},
+        body:body.toString()
+      });
+      if (!response.ok) throw new Error('Submission failed');
+      steps.forEach(step => step.hidden = true);
+      if (success) success.hidden = false;
+      if (count) count.textContent = 'Done';
+    } catch (error) {
+      submit.disabled = false;
+      submit.textContent = oldText;
+      const step = form.querySelector('[data-booking-step="6"]');
+      let errorBox = step.querySelector('.booking-submit-error');
+      if (!errorBox) {
+        errorBox = document.createElement('div');
+        errorBox.className = 'booking-error booking-submit-error';
+        step.appendChild(errorBox);
+      }
+      errorBox.textContent = 'We could not send the request just now. You can use WhatsApp below and the same details will be sent to the practice.';
+      if (whatsappFallback) whatsappFallback.hidden = false;
+    }
+  });
+}
