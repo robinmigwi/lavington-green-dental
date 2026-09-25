@@ -208,6 +208,7 @@ if (booking) {
   const summary = booking.querySelector('[data-booking-summary]');
   const success = booking.querySelector('[data-booking-success]');
   const whatsappFallback = booking.querySelector('[data-booking-whatsapp]');
+  const whatsappStatus = booking.querySelector('[data-booking-whatsapp-status]');
   const today = new Date();
   const localToday = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().split('T')[0];
 
@@ -323,6 +324,32 @@ if (booking) {
         body:body.toString()
       });
       if (!response.ok) throw new Error('Submission failed');
+
+      let whatsappSent = false;
+      try {
+        const whatsappResponse = await fetch('/.netlify/functions/send-booking-whatsapp', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({
+            name:nameInput.value.trim(),
+            phone:phoneInput.value.trim(),
+            service:serviceInput.value,
+            preferred_date:dateInput.value,
+            preferred_time:timeInput.value,
+            feeling:feelingInput.value
+          })
+        });
+        const whatsappData = await whatsappResponse.json().catch(() => ({}));
+        whatsappSent = whatsappResponse.ok && whatsappData.sent === true;
+        if (whatsappStatus) {
+          whatsappStatus.textContent = whatsappSent
+            ? 'A WhatsApp confirmation has been sent to the number you provided.'
+            : 'Your request has been recorded. WhatsApp confirmation will be available once the practice connection is enabled.';
+        }
+      } catch (whatsappError) {
+        if (whatsappStatus) whatsappStatus.textContent = 'Your request has been recorded. We could not send the WhatsApp confirmation right now.';
+      }
+
       steps.forEach(step => step.hidden = true);
       if (success) success.hidden = false;
       if (count) count.textContent = 'Done';
