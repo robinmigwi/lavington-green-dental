@@ -342,7 +342,7 @@ if (booking) {
         bookingIdStatus.textContent = 'Request reference: ' + savedData.bookingId;
       }
 
-      let whatsappSent = false;      let whatsappSent = false;
+      let whatsappSent = false;
       try {
         const whatsappResponse = await fetch('/.netlify/functions/send-booking-whatsapp', {
           method:'POST',
