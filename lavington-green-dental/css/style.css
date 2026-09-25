@@ -1696,3 +1696,11 @@ footer a:hover{color:#fff}
     transition-duration:.01ms!important;
   }
 }
+
+
+.review-author a,.review-source a{color:var(--burgundy);font-weight:800;text-decoration:none}
+.review-author a:hover,.review-source a:hover{text-decoration:underline}
+.review-source{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;font-size:.68rem;color:var(--muted)}
+.review-source a{font-size:.68rem}
+.review-attribution{font-size:.67rem;line-height:1.5;color:var(--muted)}
+.review-attribution strong{font-weight:800;color:var(--burgundy)}
