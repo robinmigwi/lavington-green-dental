@@ -25,11 +25,8 @@ exports.handler = async () => {
     if (!response.ok) {
       return {
         statusCode: response.status,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          configured: true,
-          error: data.error?.message || "Google Places request failed"
-        })
+        headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
+        body: JSON.stringify({ configured: true, error: data.error?.message || "Google Places request failed" })
       };
     }
 
@@ -39,15 +36,13 @@ exports.handler = async () => {
       authorName: review.authorAttribution?.displayName || "Google reviewer",
       authorUri: review.authorAttribution?.uri || "",
       relativePublishTimeDescription: review.relativePublishTimeDescription || "",
-      googleMapsUri: review.googleMapsUri || data.googleMapsUri || ""
+      googleMapsUri: review.googleMapsUri || data.googleMapsUri || "",
+      flagContentUri: review.flagContentUri || ""
     }));
 
     return {
       statusCode: 200,
-      headers: {
-        "Content-Type": "application/json",
-        "Cache-Control": "public, max-age=900, s-maxage=900"
-      },
+      headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
       body: JSON.stringify({
         configured: true,
         id: data.id,
@@ -61,11 +56,8 @@ exports.handler = async () => {
   } catch (error) {
     return {
       statusCode: 500,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        configured: true,
-        error: "Unable to load Google reviews"
-      })
+      headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
+      body: JSON.stringify({ configured: true, error: "Unable to load Google reviews" })
     };
   }
 };
