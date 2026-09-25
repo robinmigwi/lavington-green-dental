@@ -2282,3 +2282,16 @@ footer a:hover{color:#fff}
     height:28px;
   }
 }
+
+.booking-whatsapp-status,
+.booking-success-status{
+  margin-top:10px!important;
+  color:var(--muted);
+  font-size:.68rem!important;
+  line-height:1.55;
+}
+.booking-success-status{
+  max-width:42ch;
+  margin-left:auto!important;
+  margin-right:auto!important;
+}
