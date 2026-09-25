@@ -316,16 +316,33 @@ if (booking) {
     submit.disabled = true;
     submit.textContent = 'Sending…';
 
-    const body = new URLSearchParams(new FormData(form));
     try {
-      const response = await fetch('/', {
+      const saveResponse = await fetch('/.netlify/functions/save-booking', {
         method:'POST',
-        headers:{'Content-Type':'application/x-www-form-urlencoded'},
-        body:body.toString()
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          booking_bot: form.booking_bot ? form.booking_bot.value : '',
+          name:nameInput.value.trim(),
+          phone:phoneInput.value.trim(),
+          email:emailInput.value.trim(),
+          service:serviceInput.value,
+          preferred_date:dateInput.value,
+          preferred_time:timeInput.value,
+          feeling:feelingInput.value,
+          message:noteInput.value.trim()
+        })
       });
-      if (!response.ok) throw new Error('Submission failed');
+      const savedData = await saveResponse.json().catch(() => ({}));
+      if (!saveResponse.ok || !savedData.ok || !savedData.saved) {
+        throw new Error(savedData.error || 'The appointment request could not be saved.');
+      }
 
-      let whatsappSent = false;
+      const bookingIdStatus = booking.querySelector('[data-booking-id-status]');
+      if (bookingIdStatus && savedData.bookingId) {
+        bookingIdStatus.textContent = 'Request reference: ' + savedData.bookingId;
+      }
+
+      let whatsappSent = false;      let whatsappSent = false;
       try {
         const whatsappResponse = await fetch('/.netlify/functions/send-booking-whatsapp', {
           method:'POST',
@@ -369,7 +386,7 @@ if (booking) {
         errorBox.className = 'booking-error booking-submit-error';
         step.appendChild(errorBox);
       }
-      errorBox.textContent = 'We could not send the request just now. You can use WhatsApp below and the same details will be sent to the practice.';
+      errorBox.textContent = error && error.message ? error.message : 'We could not save the request just now. Please use WhatsApp below and the same details will be sent to the practice.';
       if (whatsappFallback) whatsappFallback.hidden = false;
     }
   });
