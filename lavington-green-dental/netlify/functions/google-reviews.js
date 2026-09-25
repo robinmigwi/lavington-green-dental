@@ -35,6 +35,7 @@ exports.handler = async () => {
       text: review.text?.text || review.originalText?.text || "",
       authorName: review.authorAttribution?.displayName || "Google reviewer",
       authorUri: review.authorAttribution?.uri || "",
+      authorPhotoUri: review.authorAttribution?.photoUri || "",
       relativePublishTimeDescription: review.relativePublishTimeDescription || "",
       googleMapsUri: review.googleMapsUri || data.googleMapsUri || "",
       flagContentUri: review.flagContentUri || ""
