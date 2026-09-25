@@ -2253,3 +2253,32 @@ footer a:hover{color:#fff}
     min-height:50px;
   }
 }
+
+.review-author{
+  flex-wrap:wrap;
+}
+.review-author-avatar{
+  width:30px;
+  height:30px;
+  border-radius:50%;
+  object-fit:cover;
+  flex:none;
+  margin-right:2px;
+}
+.review-author-name{
+  color:var(--muted);
+}
+.review-attribution{
+  font-size:12px;
+  line-height:1.5;
+}
+@media (max-width:600px){
+  .review-author{
+    align-items:flex-start;
+    row-gap:8px;
+  }
+  .review-author-avatar{
+    width:28px;
+    height:28px;
+  }
+}
