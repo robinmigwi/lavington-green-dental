@@ -140,9 +140,10 @@ document.addEventListener('DOMContentLoaded', () => {
           const starsText = '★★★★★'.slice(0, Math.max(0, Math.min(5, Math.round(review.rating || 0))));
           const author = escapeHtml(review.authorName || 'Google reviewer');
           const authorLink = review.authorUri ? '<a href="'+escapeHtml(review.authorUri)+'" target="_blank" rel="noopener">'+author+'</a>' : '<span>'+author+'</span>';
+          const authorPhoto = review.authorPhotoUri ? '<img class="review-author-avatar" src="'+escapeHtml(review.authorPhotoUri)+'" alt="" loading="lazy">' : '';
           const sourceLink = review.googleMapsUri ? '<a href="'+escapeHtml(review.googleMapsUri)+'" target="_blank" rel="noopener">View this review on Google Maps ↗</a>' : '';
           const reportLink = review.flagContentUri ? '<a href="'+escapeHtml(review.flagContentUri)+'" target="_blank" rel="noopener">Report</a>' : '';
-          card.innerHTML = '<div class="review-stars">'+starsText+'</div><blockquote>“'+escapeHtml(review.text)+'”</blockquote><div class="review-author">'+authorLink+'<span class="dot"></span><span>'+escapeHtml(review.relativePublishTimeDescription || 'Google review')+'</span></div><div class="review-source">'+sourceLink+(reportLink ? '<span>·</span>'+reportLink : '')+'</div>';
+          card.innerHTML = '<div class="review-stars">'+starsText+'</div><blockquote>“'+escapeHtml(review.text)+'”</blockquote><div class="review-author">'+authorPhoto+'<span class="review-author-name">'+authorLink+'</span><span class="dot"></span><span>'+escapeHtml(review.relativePublishTimeDescription || 'Google review')+'</span></div><div class="review-source">'+sourceLink+(reportLink ? '<span>·</span>'+reportLink : '')+'</div>';
           reviewsRoot.appendChild(card);
         });
 
@@ -218,6 +219,12 @@ if (booking) {
     booking.scrollIntoView({behavior:'smooth', block:'nearest'});
   };
 
+  const bookingEscapeHtml = value => {
+    const div = document.createElement('div');
+    div.textContent = value == null ? '' : String(value);
+    return div.innerHTML;
+  };
+
   const selectedValue = selector => {
     const selected = selector.find(button => button.classList.contains('selected'));
     return selected ? selected.dataset.value : '';
@@ -272,10 +279,10 @@ if (booking) {
       if (preview) preview.textContent = nameInput.value.trim();
     }
     if (current === 5 && summary) {
-      summary.innerHTML = '<strong>Your request</strong><br>Service: ' + escapeHtml(serviceInput.value) +
-        '<br>Date: ' + escapeHtml(dateInput.value) +
-        '<br>Preferred time: ' + escapeHtml(timeInput.value) +
-        '<br>How you are feeling: ' + escapeHtml(feelingInput.value);
+      summary.innerHTML = '<strong>Your request</strong><br>Service: ' + bookingEscapeHtml(serviceInput.value) +
+        '<br>Date: ' + bookingEscapeHtml(dateInput.value) +
+        '<br>Preferred time: ' + bookingEscapeHtml(timeInput.value) +
+        '<br>How you are feeling: ' + bookingEscapeHtml(feelingInput.value);
       const message = encodeURIComponent(
         'Hi Lavington Green Dental Suite, I would like to request an appointment.\n\n' +
         'Name: ' + nameInput.value.trim() + '\n' +
