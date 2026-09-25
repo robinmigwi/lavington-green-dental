@@ -473,17 +473,76 @@ header.scrolled .brand img{height:56px;filter:none}
     padding-top:125px;
     padding-bottom:60px;
   }
-  .hero-photo{height:430px;order:-1;margin-bottom:8px}
-  .hero-copy{text-align:center}
+  .hero-copy{
+    text-align:center;
+    order:1;
+  }
+  .hero-photo{
+    order:2;
+    height:auto;
+    margin-top:28px;
+    margin-bottom:0;
+    display:flex;
+    flex-direction:column;
+    justify-content:flex-start;
+  }
+  .hero-photo video,
+  .hero-photo img{
+    width:100%;
+    height:430px;
+    flex:0 0 430px;
+  }
   .hero h1{margin-left:auto;margin-right:auto}
   .hero-copy p{margin-left:auto;margin-right:auto}
   .hero-cta{justify-content:center}
+  .hero-note{
+    position:static;
+    margin-top:8px;
+    justify-content:center;
+    text-align:center;
+    font-size:.66rem;
+  }
+  .hero-note::before{flex:0 0 26px}
 }
 @media (max-width:600px){
-  .hero-inner{padding-left:20px;padding-right:20px}
-  .hero-photo{height:325px}
-  .hero h1{font-size:clamp(3rem,14vw,4.4rem)}
-  .hero-copy p{font-size:.92rem}
+  .hero-inner{
+    padding-left:20px;
+    padding-right:20px;
+    padding-top:108px;
+  }
+  .hero-copy{
+    width:100%;
+  }
+  .hero h1{
+    font-size:clamp(3rem,14vw,4.4rem);
+    max-width:9ch;
+  }
+  .hero-copy p{
+    font-size:.92rem;
+    line-height:1.6;
+  }
+  .hero-cta{
+    width:100%;
+    flex-direction:column;
+    align-items:stretch;
+  }
+  .hero-cta .btn{
+    width:100%;
+  }
+  .hero-photo{
+    margin-top:20px;
+  }
+  .hero-photo video,
+  .hero-photo img{
+    height:300px;
+    flex-basis:300px;
+  }
+  .hero-note{
+    margin-top:10px;
+    padding:0 6px;
+    font-size:.62rem;
+    letter-spacing:.11em;
+  }
 }
 
 /* Inner page hero */
@@ -599,19 +658,26 @@ header.scrolled .brand img{height:56px;filter:none}
   border-color:rgba(214,138,34,.45);
 }
 .service-card-media{
+  width:100%;
+  height:290px;
   min-height:290px;
+  aspect-ratio:4/3;
   display:flex;
   align-items:center;
   justify-content:center;
   background:var(--cream);
   border-radius:18px;
   overflow:hidden;
-  padding:12px;
+  padding:14px;
+  flex:0 0 290px;
 }
 .service-card-media img{
-  width:100%;
-  height:100%;
+  width:92%;
+  height:92%;
+  max-width:100%;
+  max-height:100%;
   object-fit:contain;
+  object-position:center;
   transition:transform .65s var(--ease);
 }
 .service-card:hover .service-card-media img{transform:scale(1.035)}
