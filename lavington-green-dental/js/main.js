@@ -343,8 +343,14 @@ if (booking) {
         whatsappSent = whatsappResponse.ok && whatsappData.sent === true;
         if (whatsappStatus) {
           whatsappStatus.textContent = whatsappSent
-            ? 'A WhatsApp confirmation has been sent to the number you provided.'
-            : 'Your request has been recorded. WhatsApp confirmation will be available once the practice connection is enabled.';
+            ? 'A WhatsApp message confirming your appointment request has been sent to the number you provided.'
+            : 'Your request has been recorded. WhatsApp messaging will be enabled once the practice connection is added.';
+        }
+        const successStatus = booking.querySelector('[data-booking-whatsapp-success-status]');
+        if (successStatus) {
+          successStatus.textContent = whatsappSent
+            ? 'WhatsApp message sent to your number.'
+            : 'WhatsApp confirmation is not connected yet, but your appointment request has been recorded.';
         }
       } catch (whatsappError) {
         if (whatsappStatus) whatsappStatus.textContent = 'Your request has been recorded. We could not send the WhatsApp confirmation right now.';
