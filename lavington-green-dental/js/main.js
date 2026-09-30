@@ -59,6 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const handle = slider.querySelector('.compare-handle');
     if (!before || !handle) return;
     let active = false;
+
     const setPos = clientX => {
       const rect = slider.getBoundingClientRect();
       let pct = ((clientX - rect.left) / rect.width) * 100;
@@ -67,22 +68,83 @@ document.addEventListener('DOMContentLoaded', () => {
       handle.style.left = pct + '%';
       slider.setAttribute('aria-valuenow', Math.round(pct));
     };
-    slider.addEventListener('pointerdown', e => { active = true; slider.setPointerCapture?.(e.pointerId); setPos(e.clientX); });
-    slider.addEventListener('pointermove', e => { if (active) setPos(e.clientX); });
-    slider.addEventListener('pointerup', () => { active = false; });
+
+    slider.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      active = true;
+      slider.setPointerCapture?.(e.pointerId);
+      setPos(e.clientX);
+    });
+    slider.addEventListener('pointermove', e => {
+      if (!active) return;
+      e.preventDefault();
+      setPos(e.clientX);
+    });
+    slider.addEventListener('pointerup', e => {
+      active = false;
+      try { slider.releasePointerCapture?.(e.pointerId); } catch (_) {}
+    });
     slider.addEventListener('pointercancel', () => { active = false; });
+    slider.addEventListener('lostpointercapture', () => { active = false; });
+
     slider.addEventListener('keydown', e => {
       const current = parseFloat(handle.style.left || '50');
       const rect = slider.getBoundingClientRect();
       if (e.key === 'ArrowLeft') { e.preventDefault(); setPos(rect.left + rect.width * ((current-5)/100)); }
       if (e.key === 'ArrowRight') { e.preventDefault(); setPos(rect.left + rect.width * ((current+5)/100)); }
     });
-    slider.setAttribute('tabindex','0');
+
     slider.setAttribute('role','slider');
     slider.setAttribute('aria-valuemin','0');
     slider.setAttribute('aria-valuemax','100');
     slider.setAttribute('aria-valuenow','50');
   });
+
+  const caseRoot = document.querySelector('[data-case-nav]');
+  const caseTitle = document.querySelector('[data-case-title]');
+  const casePosition = document.querySelector('[data-case-position]');
+  const caseBefore = document.querySelector('[data-case-before]');
+  const caseAfter = document.querySelector('[data-case-after]');
+
+  const treatmentCases = [
+    { title:'Crowns', before:'assets/before-after/Crowns before.png', after:'assets/before-after/Crowns after.png' },
+    { title:'Tartar removal', before:'assets/before-after/tartat removal before.png', after:'assets/before-after/tartat removal after.png' },
+    { title:'Orthodontics', before:'assets/before-after/Ortho before.png', after:'assets/before-after/Ortho after.png' },
+    { title:'Whitening', before:'assets/before-after/Whitening before.png', after:'assets/before-after/Whitening after.png' }
+  ];
+
+  if (caseRoot && caseTitle && casePosition && caseBefore && caseAfter) {
+    const buttons = [...caseRoot.querySelectorAll('[data-case]')];
+
+    const showCase = index => {
+      const item = treatmentCases[index];
+      if (!item) return;
+
+      caseBefore.src = item.before;
+      caseAfter.src = item.after;
+      caseBefore.alt = item.title + ' treatment result before treatment';
+      caseAfter.alt = item.title + ' treatment result after treatment';
+      caseTitle.textContent = item.title;
+      casePosition.textContent = (index + 1) + ' / ' + treatmentCases.length;
+
+      buttons.forEach((button, buttonIndex) => {
+        button.classList.toggle('active', buttonIndex === index);
+      });
+
+      const slider = caseBefore.closest('[data-compare]');
+      if (slider) {
+        const beforeLayer = slider.querySelector('.compare-before');
+        const handle = slider.querySelector('.compare-handle');
+        if (beforeLayer) beforeLayer.style.clipPath = 'inset(0 50% 0 0)';
+        if (handle) handle.style.left = '50%';
+        slider.setAttribute('aria-valuenow','50');
+      }
+    };
+
+    buttons.forEach(button => {
+      button.addEventListener('click', () => showCase(Number(button.dataset.case)));
+    });
+  }
 
   const journey = document.querySelector('[data-journey]');
   if (journey) {
