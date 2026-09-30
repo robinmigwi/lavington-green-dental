@@ -366,3 +366,17 @@ header.scrolled .navlinks a::after{mix-blend-mode:normal;}
   .treatment-tabs{gap:6px;}
   .treatment-tab{font-size:.8rem; padding:.68em .85em;}
 }
+
+
+/* Clinic photo on contact page */
+.contact-photo{
+  margin-bottom:16px;
+  border:1px solid var(--line);
+  background:var(--sand);
+  overflow:hidden;
+}
+.contact-photo img{
+  width:100%;
+  aspect-ratio:16/8;
+  object-fit:cover;
+}
