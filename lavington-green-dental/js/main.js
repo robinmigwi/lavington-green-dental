@@ -101,4 +101,69 @@ document.addEventListener('DOMContentLoaded', () => {
       window.open(`https://wa.me/254706820099?text=${text}`, '_blank');
     });
   }
+
+  // Treatment case switcher — preserves one full-size comparison instead of thumbnail grids
+  const treatmentTabs = document.querySelectorAll('[data-treatment]');
+  const treatmentCompare = document.querySelector('[data-treatment-compare]');
+  if (treatmentTabs.length && treatmentCompare) {
+    const beforeImg = treatmentCompare.querySelector('.cs-before img');
+    const afterImg = treatmentCompare.querySelector('.cs-after img');
+    const cases = {
+      tartar: {
+        before: 'assets/before-after/tartat removal before.png',
+        after: 'assets/before-after/tartat removal after.png',
+        label: 'Tartar removal'
+      },
+      crowns: {
+        before: 'assets/before-after/Crowns before.png',
+        after: 'assets/before-after/Crowns after.png',
+        label: 'Crowns'
+      },
+      whitening: {
+        before: 'assets/before-after/Whitening before.png',
+        after: 'assets/before-after/Whitening after.png',
+        label: 'Whitening'
+      },
+      ortho: {
+        before: 'assets/before-after/Ortho before.png',
+        after: 'assets/before-after/Ortho after.png',
+        label: 'Orthodontics'
+      }
+    };
+
+    treatmentTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const item = cases[tab.dataset.treatment];
+        if (!item) return;
+        beforeImg.src = item.before;
+        beforeImg.alt = 'Before ' + item.label.toLowerCase();
+        afterImg.src = item.after;
+        afterImg.alt = 'After ' + item.label.toLowerCase();
+        treatmentTabs.forEach(t => {
+          const active = t === tab;
+          t.classList.toggle('active', active);
+          t.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+        const r = treatmentCompare.getBoundingClientRect();
+        const pct = 50;
+        const before = treatmentCompare.querySelector('.cs-before');
+        const handle = treatmentCompare.querySelector('.cs-handle');
+        before.style.clipPath = `inset(0 50% 0 0)`;
+        handle.style.left = pct + '%';
+      });
+    });
+  }
+
+  // Header state: keep the original overlay look at the hero, then give the sticky nav a solid background.
+  const header = document.querySelector('header');
+  const headerHero = document.querySelector('.hero, .page-hero');
+  if (header && headerHero) {
+    const syncHeader = () => {
+      const threshold = headerHero.getBoundingClientRect().bottom <= 84;
+      header.classList.toggle('scrolled', threshold);
+    };
+    window.addEventListener('scroll', syncHeader, { passive: true });
+    syncHeader();
+  }
+
 });
