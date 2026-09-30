@@ -304,3 +304,65 @@ label{font-size:.86rem; font-weight:600; color:var(--maroon); display:block; mar
   .mobile-cta-bar .mcta-book{background:var(--orange); color:#fff; border-radius:10px; margin:0 4px;}
   .mobile-cta-bar .mcta-book span{font-size:.78rem;}
 }
+
+/* ---------- Presentation-safe hero video ---------- */
+.hero-photo.has-illustration video{
+  width:100%;
+  height:auto;
+  max-width:none;
+  max-height:none;
+  object-fit:contain;
+  display:block;
+  filter:drop-shadow(0 20px 30px rgba(0,0,0,.35));
+}
+
+/* Keep the navigation readable while preserving the original transparent hero treatment */
+header.scrolled{
+  background:rgba(74,5,9,.97);
+  box-shadow:0 8px 24px rgba(0,0,0,.12);
+}
+header.scrolled .navlinks a,
+header.scrolled .navlinks a.active,
+header.scrolled .navcta .btn-outline{
+  color:#fff;
+  mix-blend-mode:normal;
+}
+header.scrolled .navlinks a::after{mix-blend-mode:normal;}
+
+/* ---------- Treatment comparison: one clean full-width smile view ---------- */
+.treatment-tabs{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin:28px 0 18px;
+}
+.treatment-tab{
+  appearance:none;
+  border:1px solid var(--line);
+  background:var(--paper);
+  color:var(--maroon);
+  padding:.75em 1.05em;
+  font:600 .86rem 'Work Sans',sans-serif;
+  cursor:pointer;
+  transition:background var(--speed) var(--ease), color var(--speed) var(--ease), border-color var(--speed) var(--ease);
+}
+.treatment-tab:hover,
+.treatment-tab.active{
+  background:var(--maroon);
+  border-color:var(--maroon);
+  color:#fff;
+}
+.treatment-compare{
+  margin-top:0;
+  background:var(--sand);
+}
+.treatment-compare .cs-after img,
+.treatment-compare .cs-before img{
+  object-fit:contain;
+  background:var(--sand);
+  padding:0;
+}
+@media (max-width:560px){
+  .treatment-tabs{gap:6px;}
+  .treatment-tab{font-size:.8rem; padding:.68em .85em;}
+}
