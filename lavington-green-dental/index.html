@@ -228,13 +228,19 @@
         </div>
       </div>
       <div>
-        <div class="compare-slider" data-compare>
-          <div class="compare-layer compare-after"><img src="assets/before-after/Crowns after.png" alt="Dental treatment result after treatment" style="width:100%;height:100%;object-fit:cover;"></div>
-          <div class="compare-layer compare-before"><img src="assets/before-after/Crowns before.png" alt="Dental treatment result before treatment" style="width:100%;height:100%;object-fit:cover;"></div>
-          <div class="compare-handle"><span>↔</span></div>
+        <div class="compare-slider" data-compare tabindex="0" aria-label="Before and after treatment comparison">
+          <div class="compare-layer compare-after"><img data-case-after src="assets/before-after/Crowns after.png" alt="Crowns treatment result after treatment"></div>
+          <div class="compare-layer compare-before"><img data-case-before src="assets/before-after/Crowns before.png" alt="Crowns treatment result before treatment"></div>
+          <div class="compare-handle" aria-hidden="true"><span>↔</span></div>
           <span class="compare-label left">Before</span><span class="compare-label right">After</span>
         </div>
-        <div class="results-case-title"><strong>Patient transformation gallery</strong><span>Before / After</span></div>
+        <div class="results-case-title"><strong data-case-title>Crowns</strong><span data-case-position>1 / 4</span></div>
+        <div class="results-case-nav" data-case-nav aria-label="Patient transformation cases">
+          <button type="button" class="case-nav-btn active" data-case="0">Crowns</button>
+          <button type="button" class="case-nav-btn" data-case="1">Tartar removal</button>
+          <button type="button" class="case-nav-btn" data-case="2">Orthodontics</button>
+          <button type="button" class="case-nav-btn" data-case="3">Whitening</button>
+        </div>
       </div>
     </div>
   </div>
