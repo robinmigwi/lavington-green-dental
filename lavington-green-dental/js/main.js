@@ -415,7 +415,6 @@ if (booking) {
       '<div class="chat-send-row"><button class="btn btn-primary" type="button" data-chat-send>Send</button></div></div>'
     );
     const input = composer.querySelector('#booking-concern-text');
-    input.focus();
     composer.querySelectorAll('[data-concern]').forEach(choice => choice.addEventListener('click', () => {
       input.value = choice.dataset.concern;
       handleConcern(choice.dataset.concern);
