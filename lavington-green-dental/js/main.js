@@ -295,7 +295,7 @@ document.addEventListener('DOMContentLoaded', () => {
       .then(response => { if (!response.ok) throw new Error('Google reviews endpoint unavailable'); return response.json(); })
       .then(data => {
         if (!data || !data.configured) {
-          if (state) state.innerHTML = 'Google review excerpts are not available on this visit. You can still read all 22 patient reviews on Google.';
+          if (state) state.innerHTML = 'Our Google profile has 22 patient reviews. Read all of them on Google using the link above.';
           if (count) count.textContent = '22 reviews on Google';
           if (googleLink) googleLink.hidden = false;
           return;
@@ -346,7 +346,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       })
       .catch(() => {
-        if (state) state.innerHTML = 'Google review excerpts are not available on this visit. You can still read all 22 patient reviews on Google.';
+        if (state) state.innerHTML = 'Our Google profile has 22 patient reviews. Read all of them on Google using the link above.';
         if (count) count.textContent = '22 reviews on Google';
         if (googleLink) googleLink.hidden = false;
       });
