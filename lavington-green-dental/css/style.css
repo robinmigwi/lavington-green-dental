@@ -2938,3 +2938,20 @@ header.scrolled .nav{min-height:84px}
   .doctor-deck-photo,.doctor-deck-button{transition:none}
   .doctor-deck.is-shuffling .doctor-deck-photo[data-position="0"]{animation:none}
 }
+
+
+/* Custom Google review slider header and reliable listing fallback. */
+.review-widget-header{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,.85fr);gap:42px;align-items:center;margin:0 auto 34px;max-width:1100px}
+.review-widget-heading h2{max-width:15ch;margin:10px 0 12px;font-size:clamp(2.4rem,4.5vw,4.4rem);line-height:1;letter-spacing:-.045em}
+.review-widget-heading p{max-width:45ch;margin:0;color:var(--muted);font-size:.9rem;line-height:1.7}
+.review-google-summary{display:grid;grid-template-columns:48px minmax(0,1fr);gap:12px;align-items:center;padding:20px 22px;border:1px solid rgba(88,48,55,.12);border-radius:18px;background:#fff}
+.review-google-mark{display:grid;place-items:center;width:42px;height:42px;border:1px solid #e5e7eb;border-radius:50%;font-family:Arial,sans-serif;font-size:1.55rem;font-weight:800;color:#4285f4}
+.review-google-rating{display:flex;align-items:baseline;gap:7px 10px;flex-wrap:wrap;min-width:0}
+.review-google-rating>strong{font-size:1.45rem;color:var(--burgundy);font-weight:800}
+.review-google-rating-label{font-size:.8rem;color:var(--team-muted,#746467);font-weight:700}
+.review-google-count{flex-basis:100%;font-size:.68rem;color:var(--muted);line-height:1.5}
+.review-google-link{grid-column:2;justify-self:start;color:var(--burgundy);font-size:.72rem;font-weight:800;text-decoration:none}
+.review-google-link:hover{text-decoration:underline}
+.review-google-link[hidden]{display:none}
+@media(max-width:800px){.review-widget-header{grid-template-columns:1fr;gap:22px}.review-google-summary{max-width:520px;width:100%;box-sizing:border-box}}
+@media(max-width:480px){.review-widget-header{margin-bottom:20px}.review-google-summary{padding:16px}.review-widget-heading h2{font-size:2.5rem}}

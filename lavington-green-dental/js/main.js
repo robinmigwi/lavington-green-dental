@@ -183,8 +183,9 @@ document.addEventListener('DOMContentLoaded', () => {
       .then(response => { if (!response.ok) throw new Error('Google reviews endpoint unavailable'); return response.json(); })
       .then(data => {
         if (!data || !data.configured) {
-          if (state) state.textContent = 'Google reviews will appear here once the connection is configured.';
-          if (count) count.textContent = 'Google review integration pending';
+          if (state) state.textContent = 'We cannot load review excerpts at the moment. Read the latest feedback on Google.';
+          if (count) count.textContent = 'Live rating unavailable right now';
+          if (googleLink) googleLink.hidden = false;
           return;
         }
         if (data.error) throw new Error(data.error);
@@ -193,7 +194,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (googleLink && data.googleMapsUri) { googleLink.href = data.googleMapsUri; googleLink.hidden = false; }
 
         const reviewList = Array.isArray(data.reviews) ? data.reviews.filter(r => r && r.text) : [];
-        if (!reviewList.length) { if (state) state.textContent = 'The Google rating is connected, but no review text was returned by the Places service.'; return; }
+        if (!reviewList.length) {
+          if (state) state.textContent = 'Google did not return review excerpts for this request. You can still read the latest feedback on Google.';
+          if (googleLink) googleLink.hidden = false;
+          return;
+        }
         if (state) state.remove();
 
         reviewList.forEach((review,index) => {
@@ -229,8 +234,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       })
       .catch(() => {
-        if (state) state.textContent = 'Google reviews could not be loaded right now.';
-        if (count) count.textContent = 'Google reviews';
+        if (state) state.textContent = 'We cannot load review excerpts right now. Read the latest feedback on Google.';
+        if (count) count.textContent = 'Live rating unavailable right now';
+        if (googleLink) googleLink.hidden = false;
       });
   }
 
