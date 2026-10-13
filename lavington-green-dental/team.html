@@ -15,13 +15,25 @@
     <ul class="navlinks">
       <li><a href="index.html">Home</a></li>
       <li><a href="about.html">About</a></li>
-      <li><a href="team.html" aria-current="page">Our Team</a></li>
-      <li><a href="services.html">Services</a></li>
+      <li><a href="team.html">Our Team</a></li>
+      <li class="nav-item-services">
+        <a href="services.html" class="nav-services-link" aria-haspopup="true">Services <span class="nav-caret" aria-hidden="true">⌄</span></a>
+        <button class="nav-submenu-toggle" type="button" aria-label="Show dental treatments" aria-expanded="false" aria-controls="nav-service-links">+</button>
+        <ul class="nav-submenu" id="nav-service-links" aria-label="Dental treatments">
+          <li><a href="services.html#service-preventive">Preventive care</a></li>
+          <li><a href="services.html#service-general">General dentistry</a></li>
+          <li><a href="services.html#service-cosmetic">Cosmetic dentistry</a></li>
+          <li><a href="services.html#service-prosthetic">Crowns, bridges &amp; dentures</a></li>
+          <li><a href="services.html#service-paediatric">Paediatric dentistry</a></li>
+          <li><a href="services.html#service-orthodontic">Orthodontics</a></li>
+          <li><a href="services.html#service-surgery">Minor oral surgery</a></li>
+        </ul>
+      </li>
       <li><a href="insurance.html">Insurance &amp; Corporate</a></li>
       <li><a href="contact.html">Contact</a></li>
     </ul>
     <div class="navcta">
-      <a class="btn btn-outline" href="index.html#book">Book a visit</a>
+      <a class="btn btn-primary" href="index.html#book">Book a visit</a>
       <button class="hamburger" type="button" aria-label="Open menu" aria-expanded="false"><span></span><span></span><span></span></button>
     </div>
   </nav>
@@ -180,7 +192,7 @@
   </div>
 </footer>
 
-<a class="wa-float" href="https://wa.me/254706820099" target="_blank" rel="noopener" aria-label="Chat on WhatsApp"><svg viewBox="0 0 32 32"><path d="M16 3C9 3 3.3 8.6 3.3 15.5c0 2.4.7 4.6 1.9 6.6L3 29l7.2-2.1c1.9 1 4.1 1.6 6.4 1.6 7 0 12.7-5.6 12.7-12.5S23.5 3 16 3zm0 22.7c-2 0-3.9-.5-5.5-1.5l-.4-.2-4.3 1.3 1.3-4.2-.3-.4c-1.1-1.7-1.2-2.8-1.2-2.8s1.2 3.2 1.4 3.5c.2.3 2.4 3.7 5.9 5.1.8.3 1.5.6 2 .7.8.3 1.6.2 2.2.1.7-.1 2-.8 2.3-1.6.3-.8.3-1.4.2-1.6-.1-.1-.3-.2-.6-.4z"/></svg></a>
+<a class="wa-float" href="https://wa.me/254706820099" target="_blank" rel="noopener" aria-label="Chat with Lavington Green Dental Suite on WhatsApp"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3C9 3 3.3 8.6 3.3 15.5c0 2.4.7 4.6 1.9 6.6L3 29l7.2-2.1c1.9 1 4.1 1.6 6.4 1.6 7 0 12.7-5.6 12.7-12.5S23.5 3 16 3zm0 22.7c-2 0-3.9-.5-5.5-1.5l-.4-.2-4.3 1.3 1.3-4.2-.3-.4c-1.1-1.7-1.2-2.8-1.2-2.8s1.2 3.2 1.4 3.5c.2.3 2.4 3.7 5.9 5.1.8.3 1.5.6 2 .7.8.3 1.6.2 2.2.1.7-.1 2-.8 2.3-1.6.3-.8.3-1.4.2-1.6-.1-.1-.3-.2-.6-.4z"/></svg><span class="wa-float-label">Chat with us</span></a>
 <script src="js/main.js"></script>
 <script src="js/team.js"></script>
 <div class="mobile-cta-bar"><a href="tel:+254706820099">☎ <span>Call</span></a><a href="https://wa.me/254706820099" target="_blank" rel="noopener">◉ <span>WhatsApp</span></a><a href="index.html#book" class="mcta-book"><span>Book an appointment</span></a></div>
