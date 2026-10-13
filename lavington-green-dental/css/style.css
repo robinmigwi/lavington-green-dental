@@ -3197,7 +3197,7 @@ header.scrolled .navcta .btn-primary:hover{background:var(--orange);color:var(--
 /* More consistent typography and a calmer vertical rhythm site-wide. */
 .section{padding:88px 0}
 .section-heading{margin-bottom:30px}
-.section p{font-size:.92rem;line-height:1.72;color:#51413b}
+p{font-size:.94rem;line-height:1.72;color:#51413b;max-width:62ch;margin-bottom:.85rem}
 .section-heading p,.services-page-intro p,.services-intro p{max-width:60ch;font-size:.92rem;line-height:1.72}
 .services-page-intro{max-width:780px;margin-bottom:25px}
 .services-grid{margin-top:28px}
@@ -3205,3 +3205,19 @@ header.scrolled .navcta .btn-primary:hover{background:var(--orange);color:var(--
 .svc-lead{max-width:60ch}
 @media(max-width:760px){.section{padding:62px 0}.section-heading{margin-bottom:24px}.services-overview-section{padding-top:60px;padding-bottom:64px}}
 @media(prefers-reduced-motion:reduce){.services-detailed .svc-cat[open]>.svc-body{animation:none}}
+
+
+/* Preserve intentional component typography and custom sections after the global spacing tune. */
+.section.services-overview-section{padding:84px 0 88px}
+.services-overview-section .service-icon-card p{font-size:.76rem;line-height:1.58;color:#64514a}
+.services-sidebar-card>p{font-size:.76rem;line-height:1.6;color:#67534c}
+.services-sidebar-help p{font-size:.72rem;line-height:1.5;color:#67534c}
+.section.practice-stats-section{padding:78px 0}
+.team-page .team-principals{padding-top:clamp(72px,8vw,116px);padding-bottom:clamp(70px,8vw,116px)}
+.team-page .team-visit-cta{padding-top:70px;padding-bottom:100px}
+@media(max-width:760px){
+  .section.services-overview-section{padding:60px 0 64px}
+  .section.practice-stats-section{padding:58px 0}
+  .team-page .team-principals{padding-top:58px;padding-bottom:62px}
+  .team-page .team-visit-cta{padding-top:46px;padding-bottom:62px}
+}

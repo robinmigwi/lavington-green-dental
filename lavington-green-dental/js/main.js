@@ -93,7 +93,11 @@ document.addEventListener('DOMContentLoaded', () => {
       setActiveService(target, { updateUrl:true, scroll:true });
     }));
     serviceDetails.forEach(detail => detail.addEventListener('toggle', () => {
-      if (detail.open) setActiveService(detail, { updateUrl:true, scroll:false });
+      if (detail.open) {
+        setActiveService(detail, { updateUrl:true, scroll:false });
+      } else if (!serviceDetails.some(item => item.open)) {
+        serviceTabs.forEach(tab => tab.removeAttribute('aria-current'));
+      }
     }));
     const serviceHash = decodeURIComponent(window.location.hash.slice(1));
     const serviceHashTarget = serviceHash ? document.getElementById(serviceHash) : null;
