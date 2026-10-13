@@ -3107,3 +3107,10 @@ header.scrolled .navcta .btn-primary:hover{background:var(--orange);color:var(--
   .reveal{opacity:1!important;transform:none!important}
   .hero-photo-real>img{animation:none}
 }
+
+
+/* Keep primary calls to action visible over the deep burgundy footer. */
+.footer-cta .btn-primary{background:var(--orange);border-color:var(--orange);color:#fff;box-shadow:0 10px 26px rgba(214,138,34,.18)}
+.footer-cta .btn-primary:hover{background:var(--orange-light);border-color:var(--orange-light);color:var(--burgundy-deep)}
+@media(max-width:760px){.hero h1{font-size:clamp(3rem,9.5vw,4.5rem)}}
+@media(max-width:420px){.hero h1{font-size:clamp(2.8rem,12vw,4.2rem)}}

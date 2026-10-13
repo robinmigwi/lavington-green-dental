@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const tick = now => {
         const progress = Math.min(1, (now - start) / duration);
         const eased = 1 - Math.pow(1 - progress, 3);
-        element.textContent = Math.round(target * eased).toLocaleString('en-KE') + suffix;
+        element.textContent = String(Math.round(target * eased)) + suffix;
         if (progress < 1) window.requestAnimationFrame(tick);
       };
       window.requestAnimationFrame(tick);
