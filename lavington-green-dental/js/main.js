@@ -64,14 +64,45 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  const serviceHash = decodeURIComponent(window.location.hash.slice(1));
-  const serviceHashTarget = serviceHash ? document.getElementById(serviceHash) : null;
-  if (serviceHashTarget && serviceHashTarget.tagName === 'DETAILS') {
-    serviceHashTarget.open = true;
-    window.requestAnimationFrame(() => serviceHashTarget.scrollIntoView({
-      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
-      block: 'start'
+  const serviceDetails = [...document.querySelectorAll('.services-detailed .svc-cat')];
+  const serviceTabs = [...document.querySelectorAll('[data-service-tab]')];
+  const setActiveService = (target, options = {}) => {
+    if (!target || !serviceDetails.includes(target)) return;
+    serviceDetails.forEach(detail => { detail.open = detail === target; });
+    serviceTabs.forEach(tab => {
+      const active = tab.getAttribute('href') === '#' + target.id;
+      if (active) tab.setAttribute('aria-current', 'true');
+      else tab.removeAttribute('aria-current');
+    });
+    if (options.updateUrl && window.location.hash !== '#' + target.id) {
+      window.history.replaceState(null, '', '#' + target.id);
+    }
+    if (options.scroll) {
+      window.requestAnimationFrame(() => target.scrollIntoView({
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+        block: 'start'
+      }));
+    }
+  };
+  if (serviceDetails.length) {
+    serviceTabs.forEach(tab => tab.addEventListener('click', event => {
+      const id = decodeURIComponent(tab.getAttribute('href').slice(1));
+      const target = document.getElementById(id);
+      if (!target) return;
+      event.preventDefault();
+      setActiveService(target, { updateUrl:true, scroll:true });
     }));
+    serviceDetails.forEach(detail => detail.addEventListener('toggle', () => {
+      if (detail.open) setActiveService(detail, { updateUrl:true, scroll:false });
+    }));
+    const serviceHash = decodeURIComponent(window.location.hash.slice(1));
+    const serviceHashTarget = serviceHash ? document.getElementById(serviceHash) : null;
+    if (serviceHashTarget && serviceDetails.includes(serviceHashTarget)) {
+      setActiveService(serviceHashTarget, { updateUrl:false, scroll:true });
+    } else {
+      const initialService = serviceDetails.find(detail => detail.open) || serviceDetails[0];
+      setActiveService(initialService, { updateUrl:false, scroll:false });
+    }
   }
 
   const revealEls = document.querySelectorAll('.reveal');
