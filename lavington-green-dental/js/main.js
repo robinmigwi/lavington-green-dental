@@ -295,15 +295,15 @@ document.addEventListener('DOMContentLoaded', () => {
       .then(response => { if (!response.ok) throw new Error('Google reviews endpoint unavailable'); return response.json(); })
       .then(data => {
         if (!data || !data.configured) {
-          if (state) state.textContent = 'We cannot load review excerpts at the moment. Read the latest feedback on Google.';
-          if (count) count.textContent = 'Live rating unavailable right now';
+          if (state) state.innerHTML = 'Google review excerpts are not available on this visit. You can still read all 22 patient reviews on Google.';
+          if (count) count.textContent = '22 reviews on Google';
           if (googleLink) googleLink.hidden = false;
           return;
         }
         if (data.error) throw new Error(data.error);
         if (rating) rating.textContent = Number(data.rating || 0).toFixed(1);
         if (count) count.textContent = (data.userRatingCount || 0) + ' Google reviews';
-        if (googleLink && data.googleMapsUri) { googleLink.href = data.googleMapsUri; googleLink.hidden = false; }
+        if (googleLink) googleLink.hidden = false;
 
         const reviewList = Array.isArray(data.reviews) ? data.reviews.filter(r => r && r.text) : [];
         if (!reviewList.length) {
@@ -346,8 +346,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       })
       .catch(() => {
-        if (state) state.textContent = 'We cannot load review excerpts right now. Read the latest feedback on Google.';
-        if (count) count.textContent = 'Live rating unavailable right now';
+        if (state) state.innerHTML = 'Google review excerpts are not available on this visit. You can still read all 22 patient reviews on Google.';
+        if (count) count.textContent = '22 reviews on Google';
         if (googleLink) googleLink.hidden = false;
       });
   }

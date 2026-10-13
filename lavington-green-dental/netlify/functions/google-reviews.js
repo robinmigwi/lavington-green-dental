@@ -1,6 +1,6 @@
 exports.handler = async () => {
   const apiKey = process.env.GOOGLE_PLACES_API_KEY;
-  const placeId = process.env.GOOGLE_PLACE_ID;
+  const placeId = process.env.GOOGLE_PLACE_ID || "ChIJhc_yuBYZLxgRYpHGcOFlw3c";
 
   if (!apiKey || !placeId) {
     return {
