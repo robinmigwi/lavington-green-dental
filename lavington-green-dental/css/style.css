@@ -2787,3 +2787,46 @@ footer a:hover{color:#fff}
   .review-widget-preview{padding:22px}
   .footer-hours{display:block;width:100%;margin:6px 0}
 }
+
+
+/* Follow-up refinements: complete photos, lighter delivery, original concierge and custom review slider. */
+.brand img{height:82px}
+header.scrolled .brand img{height:66px}
+header:not(.scrolled) .nav{min-height:106px}
+header.scrolled .nav{min-height:84px}
+.dentist-image-set .dentist-main-photo,
+.dentist-supporting-photos img,
+.team-photo-gallery img{object-fit:contain;background:#f4f0ed}
+.dentist-image-set .dentist-main-photo{min-height:260px}
+.dentist-supporting-photos img{min-height:120px}
+.team-photo-gallery img{aspect-ratio:4/3}
+.review-slider-section{padding-top:52px;padding-bottom:52px}
+.review-slider-inner{max-width:960px;margin:0 auto}
+.review-carousel.review-carousel-standalone{min-height:290px;max-width:100%;margin:0 auto;padding:0 22px}
+.review-carousel-standalone .review-card{padding:26px 0 18px;text-align:center}
+.review-carousel-standalone .review-card blockquote{max-width:62ch;margin:0 auto;text-align:center;font-size:clamp(1.45rem,2.7vw,2.25rem)}
+.review-carousel-standalone .review-author{justify-content:center;flex-wrap:wrap}
+.review-carousel-standalone .review-source{justify-content:center}
+.review-carousel-standalone .review-controls{justify-content:center}
+.review-carousel-standalone .review-attribution{margin-top:8px;text-align:center;font-size:.68rem}
+.review-carousel-standalone .review-state{min-height:180px;display:grid;place-items:center;text-align:center;border:0;padding:32px 12px}
+.footer-hours-block{padding:20px 0 16px;margin-top:18px;border-top:1px solid rgba(255,255,255,.14)}
+.footer-hours-block h4{margin:0 0 12px;color:#fff;font-size:.9rem}
+.footer-hours-list{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px 16px}
+.footer-hours-day{display:flex;flex-direction:column;gap:5px;min-width:0}
+.footer-hours-day span{font-size:.74rem;color:rgba(255,255,255,.62)}
+.footer-hours-day strong{font-size:.78rem;font-weight:700;color:rgba(255,255,255,.9);white-space:nowrap}
+@media(max-width:880px){.footer-hours-list{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:760px){
+  .brand img{height:70px}
+  header.scrolled .brand img{height:60px}
+  header:not(.scrolled) .nav{min-height:92px}
+  header.scrolled .nav{min-height:78px}
+}
+@media(max-width:480px){
+  .review-slider-section{padding-top:30px;padding-bottom:34px}
+  .review-carousel.review-carousel-standalone{min-height:260px;padding:0 6px}
+  .review-carousel-standalone .review-card blockquote{font-size:1.45rem}
+  .footer-hours-list{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .footer-hours-day strong{white-space:normal}
+}

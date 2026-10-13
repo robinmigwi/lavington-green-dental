@@ -183,7 +183,7 @@ document.addEventListener('DOMContentLoaded', () => {
       .then(response => { if (!response.ok) throw new Error('Google reviews endpoint unavailable'); return response.json(); })
       .then(data => {
         if (!data || !data.configured) {
-          if (state) state.textContent = 'Google reviews are ready to connect. Add the Google Places credentials in Netlify to display the practice reviews here.';
+          if (state) state.textContent = 'Google reviews will appear here once the connection is configured.';
           if (count) count.textContent = 'Google review integration pending';
           return;
         }
@@ -229,7 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       })
       .catch(() => {
-        if (state) state.textContent = 'Google reviews could not be loaded right now. The direct Google link will appear once the connection is configured.';
+        if (state) state.textContent = 'Google reviews could not be loaded right now.';
         if (count) count.textContent = 'Google reviews';
       });
   }
