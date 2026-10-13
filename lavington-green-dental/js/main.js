@@ -24,10 +24,55 @@ document.addEventListener('DOMContentLoaded', () => {
     }));
   }
 
+  const servicesMenu = document.querySelector('.nav-item-services');
+  const servicesToggle = document.querySelector('.nav-submenu-toggle');
+  if (servicesMenu && servicesToggle) {
+    servicesToggle.addEventListener('click', () => {
+      const open = servicesMenu.classList.toggle('open');
+      servicesToggle.setAttribute('aria-expanded', String(open));
+      servicesToggle.setAttribute('aria-label', open ? 'Hide dental treatments' : 'Show dental treatments');
+    });
+    document.addEventListener('click', event => {
+      if (!servicesMenu.contains(event.target)) {
+        servicesMenu.classList.remove('open');
+        servicesToggle.setAttribute('aria-expanded', 'false');
+        servicesToggle.setAttribute('aria-label', 'Show dental treatments');
+      }
+    });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape') {
+        servicesMenu.classList.remove('open');
+        servicesToggle.setAttribute('aria-expanded', 'false');
+        servicesToggle.setAttribute('aria-label', 'Show dental treatments');
+      }
+    });
+  }
+
   const here = location.pathname.split('/').pop() || 'index.html';
   document.querySelectorAll('.navlinks a').forEach(a => {
     if (a.getAttribute('href') === here) a.classList.add('active');
   });
+
+  const motionTargets = document.querySelectorAll(
+    '.services-intro, .section-heading, .why-shell, .stats-strip, .journey, .results-shell, .review-widget-header, .calm-shell, .practice-gallery, .booking-intro, .booking-chat, .team-section-intro, .doctor-profile, .team-wider-heading, .wider-team-person, .team-visit-card, .services-page-intro'
+  );
+  motionTargets.forEach((element, index) => {
+    if (!element.classList.contains('reveal')) {
+      element.classList.add('reveal');
+      if (index % 3 === 1) element.classList.add('reveal-delay-1');
+      if (index % 3 === 2) element.classList.add('reveal-delay-2');
+    }
+  });
+
+  const serviceHash = decodeURIComponent(window.location.hash.slice(1));
+  const serviceHashTarget = serviceHash ? document.getElementById(serviceHash) : null;
+  if (serviceHashTarget && serviceHashTarget.tagName === 'DETAILS') {
+    serviceHashTarget.open = true;
+    window.requestAnimationFrame(() => serviceHashTarget.scrollIntoView({
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+      block: 'start'
+    }));
+  }
 
   const revealEls = document.querySelectorAll('.reveal');
   if ('IntersectionObserver' in window && revealEls.length) {
@@ -36,6 +81,38 @@ document.addEventListener('DOMContentLoaded', () => {
     }), { threshold:.14 });
     revealEls.forEach(el => io.observe(el));
   } else revealEls.forEach(el => el.classList.add('in'));
+
+  const countTargets = [...document.querySelectorAll('[data-count]')];
+  if (countTargets.length) {
+    const animateCount = element => {
+      if (element.dataset.counted === 'true') return;
+      element.dataset.counted = 'true';
+      const target = Number(element.dataset.count);
+      const suffix = element.dataset.suffix || '';
+      if (!Number.isFinite(target) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        element.textContent = String(target) + suffix;
+        return;
+      }
+      const duration = 1050;
+      const start = performance.now();
+      const tick = now => {
+        const progress = Math.min(1, (now - start) / duration);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        element.textContent = Math.round(target * eased).toLocaleString('en-KE') + suffix;
+        if (progress < 1) window.requestAnimationFrame(tick);
+      };
+      window.requestAnimationFrame(tick);
+    };
+    if ('IntersectionObserver' in window) {
+      const counterObserver = new IntersectionObserver(entries => entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          animateCount(entry.target);
+          counterObserver.unobserve(entry.target);
+        }
+      }), { threshold: .65 });
+      countTargets.forEach(element => counterObserver.observe(element));
+    } else countTargets.forEach(animateCount);
+  }
 
   const whyItems = [...document.querySelectorAll('[data-why]')];
   const whyPanel = document.querySelector('[data-why-panel]');

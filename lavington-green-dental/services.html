@@ -16,12 +16,24 @@
       <li><a href="index.html">Home</a></li>
       <li><a href="about.html">About</a></li>
       <li><a href="team.html">Our Team</a></li>
-      <li><a href="services.html">Services</a></li>
+      <li class="nav-item-services">
+        <a href="services.html" class="nav-services-link" aria-haspopup="true">Services <span class="nav-caret" aria-hidden="true">⌄</span></a>
+        <button class="nav-submenu-toggle" type="button" aria-label="Show dental treatments" aria-expanded="false" aria-controls="nav-service-links">+</button>
+        <ul class="nav-submenu" id="nav-service-links" aria-label="Dental treatments">
+          <li><a href="services.html#service-preventive">Preventive care</a></li>
+          <li><a href="services.html#service-general">General dentistry</a></li>
+          <li><a href="services.html#service-cosmetic">Cosmetic dentistry</a></li>
+          <li><a href="services.html#service-prosthetic">Crowns, bridges &amp; dentures</a></li>
+          <li><a href="services.html#service-paediatric">Paediatric dentistry</a></li>
+          <li><a href="services.html#service-orthodontic">Orthodontics</a></li>
+          <li><a href="services.html#service-surgery">Minor oral surgery</a></li>
+        </ul>
+      </li>
       <li><a href="insurance.html">Insurance &amp; Corporate</a></li>
       <li><a href="contact.html">Contact</a></li>
     </ul>
     <div class="navcta">
-      <a class="btn btn-outline" href="index.html#book">Book an appointment</a>
+      <a class="btn btn-primary" href="index.html#book">Book an appointment</a>
       <button class="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
     </div>
   </nav>
@@ -45,9 +57,10 @@
 
     <div class="svc-list services-detailed" style="max-width:940px; margin:0 auto;">
 
-      <details class="svc-cat" open>
+      <details class="svc-cat" id="service-preventive" open>
         <summary>Dental Health Preventive and Promotive Services <span class="plus">+</span></summary>
         <div class="svc-body">
+          <img class="svc-img" loading="lazy" decoding="async" src="assets/clinic/inside%20clinic.jpeg" alt="Inside Lavington Green Dental Suite" loading="lazy" decoding="async">
           <p class="svc-lead">Preventive care is about protecting your teeth before a problem becomes bigger. These services are particularly useful as part of regular dental care and for younger patients where appropriate.</p>
           <div class="svc-detail-grid">
             <article><h3>Fissure sealants</h3><p>A protective material is placed into the natural grooves of teeth where food and plaque can collect easily. Sealants can help reduce the chance of decay in these areas.</p></article>
@@ -56,10 +69,10 @@
         </div>
       </details>
 
-      <details class="svc-cat">
+      <details class="svc-cat" id="service-general">
         <summary>General Dental Treatment <span class="plus">+</span></summary>
         <div class="svc-body">
-          <img class="svc-img" src="assets/general-dental-treatment.png" alt="General dental treatment">
+          <img class="svc-img" loading="lazy" decoding="async" src="assets/clinic/doctor%20doing%20procedure.jpeg" alt="A dentist providing care in the clinic">
           <p class="svc-lead">This is where many everyday dental concerns begin. If you have pain, sensitivity, a broken tooth, a loose tooth, a cavity or you simply are not sure what is wrong, a general dental assessment is a sensible starting point.</p>
           <div class="svc-detail-grid">
             <article><h3>Tooth extraction</h3><p>When a tooth needs to be removed, the dentist first assesses the tooth and surrounding area, explains why removal is recommended and talks you through what to expect.</p></article>
@@ -70,10 +83,10 @@
         </div>
       </details>
 
-      <details class="svc-cat">
+      <details class="svc-cat" id="service-cosmetic">
         <summary>Cosmetic Dentistry <span class="plus">+</span></summary>
         <div class="svc-body">
-          <img class="svc-img" src="assets/cosmetic-dentistry.png" alt="Cosmetic dentistry">
+          <img class="svc-img" loading="lazy" decoding="async" src="/.netlify/images?url=/assets/clinic/DSC_0910.jpg&amp;w=960&amp;q=78&amp;fm=webp" alt="Clinical photography from Lavington Green Dental Suite">
           <p class="svc-lead">Cosmetic dentistry focuses on the appearance of your smile and how you feel about it. You do not need to arrive knowing exactly what treatment you want.</p>
           <div class="svc-detail-grid">
             <article><h3>Smile consultation</h3><p>Start by explaining what you would like to change about your smile. The team can assess your teeth and discuss the options that may be appropriate for your goals.</p></article>
@@ -82,10 +95,10 @@
         </div>
       </details>
 
-      <details class="svc-cat">
+      <details class="svc-cat" id="service-prosthetic">
         <summary>Prosthetic Dentistry <span class="plus">+</span></summary>
         <div class="svc-body">
-          <img class="svc-img" src="assets/prosthetic-dentistry.png" alt="Prosthetic dentistry">
+          <img class="svc-img" loading="lazy" decoding="async" src="assets/clinic/doctor%20doing%20procedure%203.jpeg" alt="A clinician providing dental care">
           <p class="svc-lead">Prosthetic care helps restore function and appearance where teeth are missing or need significant restoration.</p>
           <div class="svc-detail-grid">
             <article><h3>Partial and complete dentures</h3><p>Removable dentures can be used to replace several missing teeth or a full set of teeth. The team assesses your mouth and discusses the option that may suit your needs.</p></article>
@@ -95,10 +108,10 @@
         </div>
       </details>
 
-      <details class="svc-cat">
+      <details class="svc-cat" id="service-paediatric">
         <summary>Paediatric Dentistry <span class="plus">+</span></summary>
         <div class="svc-body">
-          <img class="svc-img" src="assets/paediatric-dentistry.png" alt="Paediatric dentistry">
+          <img class="svc-img" loading="lazy" decoding="async" src="assets/clinic/Doctor%20with%20a%20baby.jpeg" alt="A clinician with a young patient">
           <p class="svc-lead">Children need dental care that matches their age, development and comfort. The team can help with both prevention and treatment for growing smiles.</p>
           <div class="svc-detail-grid">
             <article><h3>Prophylaxis</h3><p>Professional cleaning and preventive care to help keep a child's teeth and gums healthy and to build positive dental habits.</p></article>
@@ -111,10 +124,10 @@
         </div>
       </details>
 
-      <details class="svc-cat">
+      <details class="svc-cat" id="service-orthodontic">
         <summary>Orthodontic Treatment <span class="plus">+</span></summary>
         <div class="svc-body">
-          <img class="svc-img" src="assets/orthodontic-treatment.png" alt="Orthodontic treatment">
+          <img class="svc-img" loading="lazy" decoding="async" src="assets/clinic/doctor%20inside%20the%20clinic.jpeg" alt="A clinician at the practice">
           <p class="svc-lead">Orthodontic care focuses on the position and alignment of teeth. If you are concerned about crowded teeth, gaps or the way your teeth meet, an orthodontic consultation is the place to start.</p>
           <div class="svc-detail-grid">
             <article><h3>Braces</h3><p>Braces apply controlled forces to gradually move teeth into a more suitable position. The team will assess your teeth and explain the appropriate treatment approach.</p></article>
@@ -123,10 +136,10 @@
         </div>
       </details>
 
-      <details class="svc-cat">
+      <details class="svc-cat" id="service-surgery">
         <summary>Minor Oral Surgery <span class="plus">+</span></summary>
         <div class="svc-body">
-          <img class="svc-img" src="assets/minor-oral-surgery.png" alt="Minor oral surgery">
+          <img class="svc-img" loading="lazy" decoding="async" src="assets/clinic/doctor%20doing%20procedure%201.jpeg" alt="A clinician providing dental treatment">
           <p class="svc-lead">Minor oral surgery covers procedures that require surgical removal of teeth that are infected, impacted or difficult to remove through a routine extraction.</p>
           <div class="svc-detail-grid">
             <article><h3>Impacted tooth assessment</h3><p>The dentist assesses the position of the tooth and surrounding structures before deciding whether surgical removal or another approach is appropriate.</p></article>
