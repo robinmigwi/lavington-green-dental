@@ -2720,3 +2720,70 @@ footer a:hover{color:#fff}
     border-radius:22px;
   }
 }
+
+
+/* Approved clinic update: dentist profiles and classified photography */
+.dentist-profile-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:28px;align-items:start}
+.dentist-profile-card{min-width:0;border:1px solid rgba(88,48,55,.12);border-radius:22px;overflow:hidden;background:#fff;box-shadow:0 10px 34px rgba(38,20,24,.045)}
+.dentist-image-set{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:8px;align-items:stretch;min-width:0}
+.dentist-image-set .dentist-main-photo{display:block;width:100%;height:100%;min-height:240px;max-height:360px;object-fit:cover;border-radius:0}
+.dentist-supporting-photos{display:grid;grid-template-rows:repeat(2,minmax(0,1fr));gap:8px;min-width:0}
+.dentist-supporting-photos img{display:block;width:100%;height:100%;min-height:112px;max-height:176px;object-fit:cover}
+.dentist-profile-copy{padding:22px 24px 24px}
+.dentist-profile-copy h3{margin:0 0 5px}
+.dentist-profile-copy .role{display:block;margin-bottom:12px}
+.dentist-profile-copy p{margin:0;color:var(--muted)}
+.team-photo-gallery{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.team-photo-gallery img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:16px;background:#f4f0ed}
+.team-photo-gallery-compact{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.team-photo-gallery-compact img{border-radius:12px;aspect-ratio:4/3}
+.footer-hours{font-size:.78rem;color:rgba(255,255,255,.75)}
+.cic-insurer-card{display:flex;align-items:center;gap:22px;max-width:760px;margin-top:24px;padding:18px 22px;background:#fff;border:1px solid rgba(88,48,55,.12);border-radius:18px}
+.cic-insurer-card>img{width:120px;height:118px;object-fit:contain;flex:0 0 auto}
+.cic-insurer-card h3{margin:0 0 5px}
+.cic-insurer-card p{margin:0 0 8px;color:var(--muted);font-size:.9rem}
+.cic-insurer-card small{font-size:.68rem;line-height:1.45;color:var(--muted)}
+.cic-insurer-card a{color:var(--burgundy);font-weight:700}
+.review-widget-shell{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,.8fr);gap:44px;align-items:center;padding:38px;border-radius:26px;background:var(--cream, #f8f3ef)}
+.review-widget-copy h2{max-width:13ch;margin:10px 0 14px}
+.review-widget-copy p{max-width:48ch;color:var(--muted);margin-bottom:22px}
+.review-widget-preview{padding:30px;background:#fff;border:1px solid rgba(88,48,55,.1);border-radius:20px;box-shadow:0 12px 36px rgba(38,20,24,.05)}
+.review-widget-google-mark{display:grid;place-items:center;width:44px;height:44px;border:1px solid #e6e6e6;border-radius:50%;font-size:1.5rem;font-weight:800;color:#4285f4;margin-bottom:14px}
+.review-widget-stars{color:#f4b400;letter-spacing:3px;font-size:1.15rem}
+.review-widget-preview h3{margin:10px 0}
+.review-widget-preview p{margin:0;color:var(--muted);font-size:.9rem;line-height:1.65}
+.booking-form-panel{height:auto;align-self:start}
+#appointment-request-form{padding:20px}
+#appointment-request-form .booking-small-copy{margin:0 0 18px;color:var(--muted);font-size:.88rem;line-height:1.6}
+.appointment-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 16px}
+.appointment-form-grid .booking-field-label{display:flex;flex-direction:column;gap:7px;min-width:0}
+.appointment-form-grid .booking-field-label>span{font-size:.78rem;color:var(--muted);font-weight:400}
+.appointment-full-width{grid-column:1/-1}
+#appointment-request-form .booking-input{width:100%;box-sizing:border-box}
+#appointment-request-form .booking-disclaimer{margin:16px 0;font-size:.8rem;line-height:1.55;color:var(--muted)}
+.appointment-submit{width:100%;justify-content:center}
+.appointment-form-status{margin:14px 0 0;font-size:.9rem;line-height:1.6}
+.appointment-form-status:empty{display:none}
+.appointment-form-status.is-error{color:#a12636}
+.appointment-form-status.is-success{color:#245d3b}
+.appointment-form-status .booking-id-status{font-size:.8rem;word-break:break-word}
+@media(max-width:900px){
+  .dentist-profile-grid{grid-template-columns:1fr}
+  .review-widget-shell{grid-template-columns:1fr;gap:24px;padding:24px}
+}
+@media(max-width:600px){
+  .dentist-image-set{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:6px}
+  .dentist-image-set .dentist-main-photo{min-height:200px}
+  .dentist-supporting-photos{gap:6px}
+  .dentist-supporting-photos img{min-height:95px}
+  .dentist-profile-copy{padding:18px}
+  .team-photo-gallery{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+  .appointment-form-grid{grid-template-columns:1fr}
+  .appointment-full-width{grid-column:auto}
+  #appointment-request-form{padding:16px}
+  .cic-insurer-card{align-items:flex-start;gap:14px;padding:14px}
+  .cic-insurer-card>img{width:90px;height:100px}
+  .review-widget-shell{padding:18px;border-radius:20px}
+  .review-widget-preview{padding:22px}
+  .footer-hours{display:block;width:100%;margin:6px 0}
+}

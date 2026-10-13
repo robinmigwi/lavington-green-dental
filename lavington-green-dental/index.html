@@ -122,26 +122,65 @@
         </div>
       </div>
 
-      <div class="booking-chat" data-booking-chat>
+      <div class="booking-chat booking-form-panel" data-appointment-form>
         <div class="booking-chat-head">
           <div>
             <span class="booking-kicker">Lavington Green Dental</span>
-            <strong>Appointment concierge</strong>
+            <strong>Appointment request</strong>
           </div>
           <span class="booking-online"><span></span>Here to help</span>
         </div>
-
-        <form id="booking-chat-form" name="appointment-request" novalidate>
-          <input type="text" name="booking_bot" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
-          <input type="hidden" name="service" data-booking-service>
-          <input type="hidden" name="suggested_visit" data-booking-suggested-visit>
-          <input type="hidden" name="feeling" data-booking-feeling>
-          <input type="hidden" name="concern" data-booking-concern>
-          <input type="hidden" name="source" value="Lavington Green Dental Suite website">
-
-          <div class="booking-thread" data-chat-thread aria-live="polite"></div>
-
-          <div class="chat-composer" data-chat-composer></div>
+        <form id="appointment-request-form" novalidate>
+          <p class="booking-small-copy">Share a few details and the clinic team will review your request. You do not need to know the exact treatment to get started.</p>
+          <div class="appointment-form-grid">
+            <label class="booking-field-label" for="appointment-name">Your name
+              <input class="booking-input" id="appointment-name" name="name" autocomplete="name" required maxlength="120" placeholder="Full name">
+            </label>
+            <label class="booking-field-label" for="appointment-phone">Phone number
+              <input class="booking-input" id="appointment-phone" name="phone" type="tel" autocomplete="tel" required maxlength="40" placeholder="0700 000 000">
+            </label>
+            <label class="booking-field-label" for="appointment-email">Email address <span>(optional)</span>
+              <input class="booking-input" id="appointment-email" name="email" type="email" autocomplete="email" maxlength="160" placeholder="you@example.com">
+            </label>
+            <label class="booking-field-label" for="appointment-service">What do you need help with?
+              <select class="booking-input" id="appointment-service" name="service" required>
+                <option value="">Choose a starting point</option>
+                <option>General dental check-up</option>
+                <option>Tooth pain or urgent concern</option>
+                <option>Cleaning or scaling</option>
+                <option>Cosmetic dentistry</option>
+                <option>Braces or teeth alignment</option>
+                <option>Child's dental visit</option>
+                <option>Missing tooth, crown or dentures</option>
+                <option>Other concern</option>
+                <option>I'm not sure yet</option>
+              </select>
+            </label>
+            <label class="booking-field-label" for="appointment-date">Preferred date
+              <input class="booking-input" id="appointment-date" name="preferred_date" type="date" required>
+            </label>
+            <label class="booking-field-label" for="appointment-time">Preferred time
+              <input class="booking-input" id="appointment-time" name="preferred_time" type="time" min="09:00" max="17:00" required>
+            </label>
+            <label class="booking-field-label" for="appointment-feeling">How are you feeling about the visit?
+              <select class="booking-input" id="appointment-feeling" name="feeling" required>
+                <option value="">Choose one</option>
+                <option value="Comfortable">I'm comfortable coming in</option>
+                <option value="A little nervous">A little nervous</option>
+                <option value="Very nervous">Quite nervous and would appreciate reassurance</option>
+                <option value="Need guidance">I'd like some guidance first</option>
+              </select>
+            </label>
+            <label class="booking-field-label" for="appointment-concern">Tell us a little about your concern
+              <textarea class="booking-input booking-textarea" id="appointment-concern" name="concern" rows="3" maxlength="1200" required placeholder="Describe what you need help with, in your own words."></textarea>
+            </label>
+            <label class="booking-field-label appointment-full-width" for="appointment-message">Anything else the team should know? <span>(optional)</span>
+              <textarea class="booking-input booking-textarea" id="appointment-message" name="message" rows="2" maxlength="1200" placeholder="Optional notes to help the clinic prepare."></textarea>
+            </label>
+          </div>
+          <p class="booking-disclaimer">This is an appointment request, not a confirmed booking. The clinic will review your preferred date and time, allocate a dentist and contact you to confirm.</p>
+          <button class="btn btn-primary appointment-submit" type="submit">Send appointment request</button>
+          <p class="appointment-form-status" data-appointment-status role="status" aria-live="polite"></p>
         </form>
       </div>
     </div>
@@ -174,7 +213,7 @@
         </div>
       </div>
       <div class="why-panel">
-        <div class="why-panel-media"><img src="assets/clinic/doctor doing procedure 1.jpeg" alt="Lavington Green Dental Suite clinical team"></div>
+        <div class="why-panel-media"><img src="assets/team/DSC_0851.jpg" alt="Lavington Green Dental Suite team"></div>
         <div class="why-panel-content why-fade" data-why-panel>
           <div class="why-panel-kicker">01 · Experience</div>
           <h3 class="why-panel-title">People you can trust with your care.</h3>
@@ -248,16 +287,19 @@
 
 <section class="section">
   <div class="container">
-    <div class="reviews-shell">
-      <div class="rating-block">
+    <div class="review-widget-shell">
+      <div class="review-widget-copy">
         <span class="eyebrow">Patient reviews</span>
-        <div class="rating-number" data-google-rating>—</div>
-        <div class="stars" data-google-stars aria-label="Google rating">★★★★★</div>
-        <div class="rating-count" data-google-count>Loading Google reviews</div>
-        <a class="google-link" data-google-link href="#" target="_blank" rel="noopener" hidden>View on Google ↗</a>
+        <h2>Hear from people who have visited us.</h2>
+        <p>We want patients to be able to read genuine feedback in its original Google context. The connected review slider will be added here once the clinic's approved review widget is linked.</p>
+        <a class="btn btn-primary" href="https://share.google/vuc92deznDeyIcVkS" target="_blank" rel="noopener">Read our Google reviews ↗</a>
       </div>
-      <div class="review-carousel" data-review-carousel>
-        <div class="review-state" data-review-state>Loading the practice's Google reviews…</div>
+      <div class="review-widget-preview">
+        <div class="review-widget-google-mark" aria-hidden="true">G</div>
+        <div class="review-widget-stars" aria-label="Google reviews">★★★★★</div>
+        <h3>Google Reviews</h3>
+        <p>The review carousel will display verified review text, reviewer attribution and links to Google once the clinic's connected widget has been authorised.</p>
+        <!-- Insert the clinic-owned Trustindex widget embed here after it has been created and approved. -->
       </div>
     </div>
   </div>
@@ -266,7 +308,7 @@
 <section class="section sand">
   <div class="container">
     <div class="calm-shell">
-      <div class="calm-media"><img src="assets/clinic/inside clinic.jpeg" alt="Lavington Green Dental Suite reception"></div>
+      <div class="calm-media"><img src="assets/clinic/DSC_0910.jpg" alt="Inside the Lavington Green Dental Suite facility"></div>
       <div>
         <span class="eyebrow">No stress, just care</span>
         <h2>Nervous about the dentist? You're not alone.</h2>
@@ -291,8 +333,8 @@
       <a class="text-link" href="about.html">Meet the practice <span>→</span></a>
     </div>
     <div class="practice-gallery">
-      <div class="gallery-item"><img src="assets/clinic/We care.jpeg" alt="Lavington Green Dental Suite reception"><span class="gallery-caption">Our reception</span></div>
-      <div class="gallery-item"><img src="assets/clinic/team celebtating.jpeg" alt="Lavington Green Dental Suite clinical team"><span class="gallery-caption">Our team</span></div>
+      <div class="gallery-item"><img src="assets/clinic/DSC_0914.jpg" alt="Reception and patient areas at Lavington Green Dental Suite"><span class="gallery-caption">Our reception</span></div>
+      <div class="gallery-item"><img src="assets/team/DSC_0853.jpg" alt="Lavington Green Dental Suite team"><span class="gallery-caption">Our team</span></div>
       <div class="gallery-item" style="background:var(--burgundy);display:flex;align-items:center;justify-content:center;padding:35px"><div><span class="eyebrow">Since 2011</span><h3 style="color:#fff;font-size:2.1rem">A decade and a half of caring for Lavington's smiles.</h3></div></div>
     </div>
   </div>
@@ -321,13 +363,15 @@
       <div><h4>Explore</h4><a href="about.html">About Us</a><a href="team.html">Our Team</a><a href="services.html">Services</a><a href="insurance.html">Insurance &amp; Corporate</a></div>
       <div><h4>Get in touch</h4><a href="tel:+254706820099">0706 820 099</a><a href="tel:+254723711130">0723 711 130</a><a href="mailto:info@lavingtongreendental.co.ke">info@lavingtongreendental.co.ke</a><a href="https://wa.me/254706820099" target="_blank" rel="noopener">WhatsApp us</a></div>
     </div>
-    <div class="foot-bottom"><span>© 2026 Lavington Green Dental Suite. All rights reserved.</span><span>Lavington Green Shopping Centre, Chandarana Building, 3rd Floor, Suite 301</span></div>
+    <div class="foot-bottom"><span>© 2026 Lavington Green Dental Suite. All rights reserved.</span>
+    <span class="footer-hours">Opening hours: Mon–Fri 9:00am–5:00pm · Saturday 9:00am–1:00pm</span><span>Lavington Green Shopping Centre, Chandarana Building, 3rd Floor, Suite 301</span></div>
   </div>
 </footer>
 
 <a class="wa-float" href="https://wa.me/254706820099" target="_blank" rel="noopener" aria-label="Chat on WhatsApp"><svg viewBox="0 0 32 32"><path d="M16 3C9 3 3.3 8.6 3.3 15.5c0 2.4.7 4.6 1.9 6.6L3 29l7.2-2.1c1.9 1 4.1 1.6 6.4 1.6 7 0 12.7-5.6 12.7-12.5S23.5 3 16 3zm0 22.7c-2 0-3.9-.5-5.5-1.5l-.4-.2-4.3 1.3 1.3-4.2-.3-.4c-1.1-1.7-1.2 2.8-1.2 2.8s1.2 3.2 1.4 3.5c.2.3 2.4 3.7 5.9 5.1.8.3 1.5.6 2 .7.8.3 1.6.2 2.2.1.7-.1 2-.8 2.3-1.6.3-.8.3-1.4.2-1.6-.1-.1-.3-.2-.6-.4z"/></svg></a>
 
 <script src="js/main.js"></script>
+<script src="js/appointment-form.js"></script>
 <div class="mobile-cta-bar"><a href="tel:+254706820099">☎ <span>Call</span></a><a href="https://wa.me/254706820099" target="_blank" rel="noopener">◉ <span>WhatsApp</span></a><a href="#book" class="mcta-book"><span>Book an appointment</span></a></div>
 </body>
 </html>

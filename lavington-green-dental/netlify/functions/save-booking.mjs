@@ -82,12 +82,15 @@ export const handler = async (event) => {
       }
     });
 
+    const adminNotified = await notifyAdministrator(booking);
+
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
         ok: true,
         saved: true,
+        adminNotified,
         bookingId: id,
         booking
       })
@@ -115,4 +118,46 @@ function normalizePhone(value) {
   if (raw.startsWith("254")) return raw;
   if (raw.startsWith("0")) return "254" + raw.slice(1);
   return raw;
+}
+
+
+async function notifyAdministrator(booking) {
+  const apiKey = process.env.RESEND_API_KEY;
+  const to = process.env.BOOKING_ADMIN_EMAIL;
+  const from = process.env.RESEND_FROM_EMAIL;
+
+  // Test deployments save requests without pretending that an administrator was notified.
+  if (!apiKey || !to || !from) return false;
+
+  const subject = "New dental appointment request";
+  const text = [
+    "A new appointment request has been saved for Lavington Green Dental Suite.",
+    "",
+    "Request reference: " + booking.id,
+    "Name: " + booking.name,
+    "Phone: " + booking.phone,
+    "Email: " + (booking.email || "Not provided"),
+    "Requested service: " + booking.service,
+    "Preferred date: " + booking.preferredDate,
+    "Preferred time: " + booking.preferredTime,
+    "Patient comfort: " + booking.feeling,
+    "Concern: " + booking.concern,
+    "Additional notes: " + (booking.message || "None"),
+    "",
+    "This is a request only. Review availability and assign a dentist before confirming with the patient."
+  ].join("\n");
+
+  try {
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer " + apiKey,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ from, to, subject, text })
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
 }
