@@ -1,5 +1,5 @@
 import { timingSafeEqual } from "node:crypto";
-import { getStore } from "@netlify/blobs";
+import { connectLambda, getStore } from "@netlify/blobs";
 
 const STORE_NAME = "appointment-requests";
 const NAMESPACE = safeNamespace(process.env.BOOKING_DATA_NAMESPACE || "preview");
@@ -27,6 +27,9 @@ export const handler = async (event) => {
 
   let store;
   try {
+    // These functions use the Lambda-compatible handler signature. Initialize
+    // Netlify Blobs from the incoming Lambda event before opening the store.
+    connectLambda(event);
     store = getStore(STORE_NAME);
   } catch {
     return response(503, {
