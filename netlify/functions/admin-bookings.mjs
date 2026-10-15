@@ -593,25 +593,75 @@ async function sendConfirmationEmail(booking) {
   const confirmedDate = formatDate(booking.confirmedDate);
   const confirmedTime = formatTime(booking.confirmedTime);
   const subject = "Your appointment is confirmed — Lavington Green Dental Suite";
+  const patientName = escapeHtml(booking.name);
+  const dentistName = escapeHtml(booking.assignedDentist);
+  const reference = escapeHtml(booking.recorditEventNo);
   const text = [
-    "Hello " + booking.name + ",",
+    "LAVINGTON GREEN DENTAL SUITE",
+    "APPOINTMENT CONFIRMED",
     "",
-    "Your appointment at Lavington Green Dental Suite has been confirmed.",
+    "Hello " + booking.name + ",",
+    "Your appointment has been confirmed by our clinic.",
+    "",
+    "APPOINTMENT DETAILS",
     "Date: " + confirmedDate,
     "Time: " + confirmedTime + " EAT",
     "Dentist: " + booking.assignedDentist,
     "Reference: " + booking.recorditEventNo,
     "",
-    "If you need to make a change, please contact the clinic.",
+    "Please keep this email for your records. If you need to change your appointment, contact Lavington Green Dental Suite.",
+    "",
+    "We look forward to welcoming you.",
     "Lavington Green Dental Suite"
   ].join("\n");
-  const html = "<p>Hello " + escapeHtml(booking.name) + ",</p>" +
-    "<p>Your appointment at Lavington Green Dental Suite has been confirmed.</p><dl>" +
-    "<dt><strong>Date</strong></dt><dd>" + escapeHtml(confirmedDate) + "</dd>" +
-    "<dt><strong>Time</strong></dt><dd>" + escapeHtml(confirmedTime) + " EAT</dd>" +
-    "<dt><strong>Dentist</strong></dt><dd>" + escapeHtml(booking.assignedDentist) + "</dd>" +
-    "<dt><strong>Reference</strong></dt><dd>" + escapeHtml(booking.recorditEventNo) + "</dd>" +
-    "</dl><p>If you need to make a change, please contact the clinic.</p><p>Lavington Green Dental Suite</p>";
+  const html = `<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Appointment confirmed</title></head>
+<body style="margin:0;padding:0;background-color:#f3f6f3;font-family:Arial,Helvetica,sans-serif;color:#24352d;">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;">Your appointment at Lavington Green Dental Suite is confirmed.</div>
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#f3f6f3;padding:28px 12px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e0e8e2;">
+        <tr><td style="background-color:#123d2c;padding:30px 32px 26px;text-align:left;">
+          <p style="margin:0 0 8px;color:#d8bd73;font-size:11px;letter-spacing:2px;font-weight:bold;">LAVINGTON GREEN</p>
+          <h1 style="margin:0;color:#ffffff;font-size:25px;line-height:1.25;font-weight:700;">Your appointment is confirmed</h1>
+          <p style="margin:10px 0 0;color:#dce9df;font-size:14px;line-height:1.6;">Thank you for choosing Lavington Green Dental Suite.</p>
+        </td></tr>
+        <tr><td style="padding:28px 32px 12px;">
+          <p style="margin:0 0 8px;font-size:16px;line-height:1.6;">Hello ${patientName},</p>
+          <p style="margin:0;color:#5b6b62;font-size:14px;line-height:1.75;">Your appointment has been confirmed by our clinic. Here are the details for your visit.</p>
+        </td></tr>
+        <tr><td style="padding:14px 32px 28px;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f8f5;border:1px solid #e0e9e1;border-radius:12px;">
+            <tr><td style="padding:20px 22px 8px;">
+              <p style="margin:0;color:#567465;font-size:11px;letter-spacing:1.5px;font-weight:bold;">YOUR APPOINTMENT</p>
+              <p style="margin:12px 0 4px;color:#123d2c;font-size:19px;font-weight:bold;">${escapeHtml(confirmedDate)}</p>
+              <p style="margin:0;color:#b08b36;font-size:16px;font-weight:bold;">${escapeHtml(confirmedTime)} EAT</p>
+            </td></tr>
+            <tr><td style="padding:12px 22px 20px;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr><td style="padding:12px 0;border-top:1px solid #dfe8e1;color:#68796f;font-size:12px;width:100px;">Dentist</td><td style="padding:12px 0;border-top:1px solid #dfe8e1;color:#24352d;font-size:14px;font-weight:bold;">${dentistName}</td></tr>
+                <tr><td style="padding:12px 0 0;border-top:1px solid #dfe8e1;color:#68796f;font-size:12px;">Reference</td><td style="padding:12px 0 0;border-top:1px solid #dfe8e1;color:#24352d;font-size:14px;font-weight:bold;">${reference}</td></tr>
+              </table>
+            </td></tr>
+          </table>
+        </td></tr>
+        <tr><td style="padding:0 32px 28px;">
+          <div style="height:3px;background:#d8bd73;width:48px;margin-bottom:18px;"></div>
+          <p style="margin:0 0 10px;color:#24352d;font-size:14px;font-weight:bold;">Need to make a change?</p>
+          <p style="margin:0;color:#5b6b62;font-size:13px;line-height:1.75;">Please contact Lavington Green Dental Suite if you need to reschedule or have any questions about your visit.</p>
+          <p style="margin:18px 0 0;color:#24352d;font-size:14px;line-height:1.7;">We look forward to welcoming you.</p>
+        </td></tr>
+        <tr><td style="background:#123d2c;padding:20px 32px;text-align:center;">
+          <p style="margin:0;color:#ffffff;font-size:13px;font-weight:bold;">Lavington Green Dental Suite</p>
+          <p style="margin:6px 0 0;color:#c8d9cd;font-size:11px;">Your smile, cared for.</p>
+        </td></tr>
+      </table>
+      <p style="margin:16px 0 0;color:#829087;font-size:11px;line-height:1.5;text-align:center;">This email confirms the appointment details shown above. Please keep it for your records.</p>
+    </td></tr>
+  </table>
+</body>
+</html>`;
 
   try {
     const result = await fetch("https://api.resend.com/emails", {
