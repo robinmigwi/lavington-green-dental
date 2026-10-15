@@ -315,7 +315,26 @@ async function loadRecorditPlanners() {
       false
     );
   }
-  return planners;
+
+  // available_planners can return only planner IDs. access_settings contains
+  // the clinic's ID-to-display-name mapping, so combine both responses.
+  let nameByPlannerId = new Map();
+  try {
+    const settings = await requestRecordit("access_settings");
+    const namedPlanners = normalizeRecorditPlanners(settings);
+    nameByPlannerId = new Map(namedPlanners.map((planner) => [
+      planner.id,
+      planner.name
+    ]));
+  } catch {
+    // Preserve usable planner IDs if names cannot be loaded. Assignment still
+    // uses the planner ID, never the display label.
+  }
+
+  return planners.map((planner) => ({
+    ...planner,
+    name: nameByPlannerId.get(planner.id) || planner.name || planner.id
+  }));
 }
 
 function recorditUtcDateTime(date, time) {
