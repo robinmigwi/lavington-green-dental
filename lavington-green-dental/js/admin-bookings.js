@@ -321,8 +321,14 @@
         }
 
         button.disabled = true;
-        button.textContent = isAssignment ? "Saving to Recordit…" : "Processing…";
-        message.innerHTML = "";
+        button.textContent = isAssignment ? "Saving to Recordit…" : "Sending confirmation…";
+        showMessage(
+          message,
+          isAssignment
+            ? "Saving the appointment to Recordit. This can take a little while. Please do not submit again or close this page."
+            : "Updating the booking and sending the patient confirmation…",
+          ""
+        );
 
         const payload = isAssignment ? {
           action: "assign",
@@ -362,7 +368,19 @@
             notice = "The appointment status was saved, but the patient notification was not sent. Check notification settings.";
             kind = "error";
           }
-          await loadBookings();
+          const updatedBooking = {
+            ...booking,
+            status: data.status || booking.status,
+            assignedDentist: data.assignedDentist || booking.assignedDentist,
+            confirmedDate: data.confirmedDate || booking.confirmedDate,
+            confirmedTime: data.confirmedTime || booking.confirmedTime,
+            recorditEventNo: data.recorditEventNo || booking.recorditEventNo,
+            recorditConfirmed: data.recorditConfirmed === true || booking.recorditConfirmed === true,
+            patientConfirmation: data.patientConfirmation || booking.patientConfirmation,
+            updatedAt: new Date().toISOString()
+          };
+          const updatedCard = renderBooking(updatedBooking);
+          card.replaceWith(updatedCard);
           showMessage(pageMessage, notice, kind);
         } catch (error) {
           showMessage(message, error.message || "Could not process this request.", "error");
