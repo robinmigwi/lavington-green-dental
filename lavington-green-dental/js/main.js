@@ -826,6 +826,8 @@ if (booking) {
       }
 
       state.savedId = savedData.requestId || savedData.bookingId || '';
+      const clinicAlerts = savedData.clinicNotifications || {};
+      const clinicAlertSent = clinicAlerts.email?.sent === true || clinicAlerts.whatsapp?.sent === true;
 
       thread.innerHTML = '';
       const success = document.createElement('div');
@@ -837,7 +839,8 @@ if (booking) {
         (state.savedId ? '<p class="booking-id-status">Request reference: ' + escape(state.savedId) + '</p>' : '') +
         '<p class="booking-success-status">Your appointment is not confirmed yet. We will contact you by ' +
         escape(state.confirmationChannel === 'email' ? 'email' : 'SMS text message') +
-        ' after the clinic confirms it.</p>';
+        ' after the clinic confirms it.</p>' +
+        (!clinicAlertSent ? '<p class="booking-success-status">The request is saved, but the clinic notification service is not confirmed as delivered yet. If you need help quickly, please contact the clinic directly.</p>' : '');
       thread.appendChild(success);
       composer.innerHTML = '';
     } catch (error) {
