@@ -393,6 +393,9 @@ if (booking) {
     date: '',
     time: '',
     message: '',
+    availableSlots: [],
+    selectedSlot: null,
+    plannerLabel: '',
     savedId: ''
   };
 
@@ -674,27 +677,115 @@ if (booking) {
   };
 
   const askDateTime = () => {
+    const previousDate = state.date;
+    const previousSlot = state.selectedSlot;
     state.stage = 'date';
+    state.availableSlots = [];
+    state.selectedSlot = null;
+
     setComposer(
-      '<div class="chat-question"><div class="chat-mini-prompt">When would you like to come in?</div>' +
+      '<div class="chat-question"><div class="chat-mini-prompt">Choose an available appointment</div>' +
       '<div class="booking-date-grid">' +
-      '<div><label for="booking-date-text">Preferred date</label><input class="booking-input chat-input" id="booking-date-text" type="date"></div>' +
-      '<div><label for="booking-time-text">Preferred time</label><select class="booking-input chat-input" id="booking-time-text"><option value="">Choose a time</option>' +
-      ['9:00 am','9:30 am','10:00 am','10:30 am','11:00 am','11:30 am','12:00 pm','12:30 pm','1:00 pm','1:30 pm','2:00 pm','2:30 pm','3:00 pm','3:30 pm','4:00 pm','4:30 pm'].map(t => '<option>' + t + '</option>').join('') +
-      '</select></div></div>' +
-      '<p class="booking-note">Your preferred time is a request. The practice will confirm the available appointment time.</p>' +
+      '<div><label for="booking-date-text">Appointment date</label><input class="booking-input chat-input" id="booking-date-text" type="date"></div>' +
+      '<div><label for="booking-time-text">Available doctor and time</label><select class="booking-input chat-input" id="booking-time-text" disabled><option value="">Choose a date first</option></select></div></div>' +
+      '<p class="booking-note">Times are checked live against the clinic booking system. Your appointment remains unconfirmed until the clinic confirms it.</p>' +
       '<div class="chat-send-row"><button class="btn btn-primary" type="button" data-chat-next>Continue</button></div></div>'
     );
+
     const date = composer.querySelector('#booking-date-text');
     const time = composer.querySelector('#booking-time-text');
     const now = new Date();
     date.min = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().split('T')[0];
-    date.focus();
-    composer.querySelector('[data-chat-next]').addEventListener('click', () => {
-      if (!date.value || !time.value) { inputError('Choose a preferred date and time so we know when you would like to visit.'); return; }
+
+    const loadSlots = async (slotToRestore) => {
+      const previousError = composer.querySelector('.chat-error');
+      if (previousError) previousError.remove();
+      state.availableSlots = [];
+      state.selectedSlot = null;
+      time.disabled = true;
+      time.innerHTML = '<option value="">Checking availability…</option>';
+
+      if (!date.value) {
+        time.innerHTML = '<option value="">Choose a date first</option>';
+        return;
+      }
+
+      try {
+        const response = await fetch('/.netlify/functions/recordit-slots', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ date: date.value })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !data.ok) {
+          throw new Error(data.error || 'We could not load available appointment times.');
+        }
+
+        if (data.maxDate) date.max = data.maxDate;
+        state.availableSlots = Array.isArray(data.slots) ? data.slots : [];
+        time.innerHTML = '';
+
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = state.availableSlots.length
+          ? 'Choose an available time'
+          : 'No appointments available on this date';
+        time.appendChild(placeholder);
+
+        state.availableSlots.forEach((slot, index) => {
+          const option = document.createElement('option');
+          option.value = String(index);
+          option.textContent = slot.localStart + '–' + slot.localEnd + ' · ' + slot.plannerLabel;
+          time.appendChild(option);
+        });
+
+        time.disabled = state.availableSlots.length === 0;
+
+        if (slotToRestore && state.availableSlots.length) {
+          const restoredIndex = state.availableSlots.findIndex((slot) =>
+            slot.start === slotToRestore.start &&
+            slot.end === slotToRestore.end &&
+            slot.planner === slotToRestore.planner
+          );
+          if (restoredIndex >= 0) {
+            time.value = String(restoredIndex);
+            state.selectedSlot = state.availableSlots[restoredIndex];
+          }
+        }
+      } catch (error) {
+        time.innerHTML = '<option value="">Availability unavailable</option>';
+        time.disabled = true;
+        inputError(error && error.message
+          ? error.message
+          : 'We could not load available times. Please try again or call the clinic.');
+      }
+    };
+
+    date.addEventListener('change', () => {
       state.date = date.value;
-      state.time = time.value;
-      addMessage('patient', formatDate(date.value) + ' at ' + time.value);
+      loadSlots(null);
+    });
+
+    time.addEventListener('change', () => {
+      const index = Number(time.value);
+      state.selectedSlot = time.value !== '' ? state.availableSlots[index] || null : null;
+    });
+
+    date.focus();
+    if (previousDate) {
+      date.value = previousDate;
+      loadSlots(previousSlot);
+    }
+
+    composer.querySelector('[data-chat-next]').addEventListener('click', () => {
+      if (!date.value || !time.value || !state.selectedSlot) {
+        inputError('Choose an available date, doctor and time to continue.');
+        return;
+      }
+      state.date = date.value;
+      state.time = state.selectedSlot.localStart;
+      state.plannerLabel = state.selectedSlot.plannerLabel;
+      addMessage('patient', formatDate(date.value) + ' at ' + state.time + ' with ' + state.plannerLabel);
       askNotes();
     });
   };
@@ -789,6 +880,9 @@ if (booking) {
           concern:state.concern,
           preferred_date:state.date,
           preferred_time:state.time,
+          start:state.selectedSlot ? state.selectedSlot.start : '',
+          end:state.selectedSlot ? state.selectedSlot.end : '',
+          planner:state.selectedSlot ? state.selectedSlot.planner : '',
           feeling:state.feeling,
           message:state.message
         })
