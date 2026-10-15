@@ -25,7 +25,15 @@ export const handler = async (event) => {
     return response(503, { ok: false, error: "The administrator dashboard has not been configured." }, headers);
   }
 
-  const store = getStore(STORE_NAME);
+  let store;
+  try {
+    store = getStore(STORE_NAME);
+  } catch {
+    return response(503, {
+      ok: false,
+      error: "Appointment storage could not be initialized. The administrator token passed authentication, but the booking storage service is unavailable. Check the Netlify function logs and Blobs configuration."
+    }, headers);
+  }
 
   if (event.httpMethod === "GET") {
     try {
