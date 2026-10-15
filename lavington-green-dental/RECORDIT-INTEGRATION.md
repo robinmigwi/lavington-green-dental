@@ -77,9 +77,10 @@ This request-first workflow deliberately does not call Recordit's \`save_appoint
 4. Open the Deploy Preview and submit a request using fictional details, choosing SMS or email as the patient confirmation method.
 5. Verify the website states that the request has been received and is **not confirmed**.
 6. Open \`/admin-bookings.html\` on the same preview host and sign in with the admin token. Confirm the new request appears under Pending dentist allocation.
-7. In the sample clinic, have the administrator allocate a dentist and create/confirm the appointment in Recordit manually.
-8. In the dashboard, enter the assigned dentist, final date/time, and Recordit event number. Tick the confirmation checkbox and submit.
-9. Verify the patient receives the chosen email/SMS only at this final step. If delivery fails, configure the relevant provider and retry.
-10. Keep Production untouched until this whole preview workflow is verified.
+7. In the sample clinic, select a dentist and confirm the final date/time in the admin dashboard. Submit the assignment once.
+8. Verify the appointment appears under the selected planner in the sample Recordit clinic and that the dashboard displays the returned event number.
+9. If Recordit returns `confirmed: false`, verify that no patient message is sent. Do not resubmit the assignment, because that could create a duplicate appointment.
+10. If Recordit reports the appointment confirmed, verify the patient's chosen email/SMS notification. If notification delivery fails, configure the relevant provider and retry only the notification.
+11. Keep Production untouched until this whole preview workflow is verified.
 
 Use only fictional patient data for preview tests. Do not paste API tokens into GitHub, website JavaScript, or support messages.

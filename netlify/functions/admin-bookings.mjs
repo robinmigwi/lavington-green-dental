@@ -38,6 +38,21 @@ export const handler = async (event) => {
     }, headers);
   }
 
+  if (event.httpMethod === "GET" &&
+      String((event.queryStringParameters || {}).resource || "") === "planners") {
+    try {
+      const planners = await loadRecorditPlanners();
+      return response(200, { ok: true, planners }, headers);
+    } catch (error) {
+      return response(error && error.statusCode ? error.statusCode : 502, {
+        ok: false,
+        error: error && error.message
+          ? error.message
+          : "Could not load dentists from Recordit. Check the preview Recordit configuration."
+      }, headers);
+    }
+  }
+
   if (event.httpMethod === "GET") {
     try {
       const result = await store.list({ prefix: REQUEST_PREFIX });
@@ -68,9 +83,10 @@ export const handler = async (event) => {
     return response(400, { ok: false, error: "Invalid request." }, headers);
   }
 
-  if (data.action !== "confirm" || typeof data.requestId !== "string" ||
+  const action = clean(data.action, 40);
+  if (!["assign", "confirm"].includes(action) || typeof data.requestId !== "string" ||
       !data.requestId.startsWith(REQUEST_PREFIX) || data.requestId.length > 160) {
-    return response(400, { ok: false, error: "Invalid appointment confirmation request." }, headers);
+    return response(400, { ok: false, error: "Invalid appointment action request." }, headers);
   }
 
   let booking;
@@ -82,6 +98,10 @@ export const handler = async (event) => {
 
   if (!booking) {
     return response(404, { ok: false, error: "Appointment request not found." }, headers);
+  }
+
+  if (action === "assign") {
+    return await assignBookingToRecordit(data, booking, store, headers);
   }
 
   if (booking.status !== "confirmed") {
@@ -174,6 +194,344 @@ async function saveBooking(store, booking) {
       namespace: NAMESPACE
     }
   });
+}
+
+
+class RecorditRequestError extends Error {
+  constructor(message, statusCode, uncertain) {
+    super(message);
+    this.statusCode = statusCode || null;
+    this.uncertain = Boolean(uncertain);
+  }
+}
+
+async function requestRecordit(endpoint, body) {
+  const apiKey = String(process.env.RECORDIT_API_KEY || "");
+  const baseUrl = String(
+    process.env.RECORDIT_API_BASE_URL || "https://api.recordit.ke/ai_assist"
+  ).replace(/\/+$/, "");
+
+  if (!apiKey) {
+    throw new RecorditRequestError(
+      "Recordit is not configured for this Deploy Preview. The clinic request is still saved.",
+      503,
+      false
+    );
+  }
+
+  const headers = {
+    "Authorization": "Bearer " + apiKey,
+    "Accept": "application/json"
+  };
+  const options = { method: "POST", headers, signal: AbortSignal.timeout(12000) };
+  if (body !== undefined) {
+    headers["Content-Type"] = "application/json";
+    options.body = JSON.stringify(body);
+  }
+
+  let result;
+  try {
+    result = await fetch(baseUrl + "/" + endpoint, options);
+  } catch {
+    throw new RecorditRequestError(
+      endpoint === "save_appointment"
+        ? "Recordit could not confirm the save result. The system has paused this request to avoid a duplicate appointment."
+        : "Could not connect to Recordit. The booking request is still saved.",
+      null,
+      endpoint === "save_appointment"
+    );
+  }
+
+  const payload = await result.json().catch(() => null);
+  if (!result.ok) {
+    const upstreamMessage = payload && typeof payload === "object"
+      ? clean(payload.error || payload.message || payload.detail || "", 240)
+      : "";
+    const fallback = endpoint === "save_appointment" && result.status >= 500
+      ? "Recordit returned a server error. The save result is uncertain, so this request has been paused to avoid a duplicate appointment."
+      : "Recordit rejected the request (HTTP " + result.status + "). Check the selected dentist, date and time.";
+    throw new RecorditRequestError(
+      upstreamMessage || fallback,
+      result.status,
+      endpoint === "save_appointment" && result.status >= 500
+    );
+  }
+
+  if (payload && typeof payload === "object" && !Array.isArray(payload) &&
+      (payload.error || payload.success === false)) {
+    throw new RecorditRequestError(
+      clean(payload.error || payload.message || "Recordit rejected the appointment.", 240),
+      result.status,
+      false
+    );
+  }
+
+  return payload;
+}
+
+function normalizeRecorditPlanners(payload) {
+  let rows = [];
+  if (Array.isArray(payload)) {
+    rows = payload;
+  } else if (payload && Array.isArray(payload.availablePlanners)) {
+    rows = payload.availablePlanners;
+  } else if (payload && Array.isArray(payload.planners)) {
+    rows = payload.planners;
+  } else if (payload && payload.availablePlanners && typeof payload.availablePlanners === "object") {
+    rows = Object.entries(payload.availablePlanners).map(([planner, name]) => ({ planner, name }));
+  } else if (payload && payload.planners && typeof payload.planners === "object") {
+    rows = Object.entries(payload.planners).map(([planner, name]) => ({ planner, name }));
+  }
+
+  const normalized = rows.map((row) => {
+    if (typeof row === "string") return { id: clean(row, 100), name: clean(row, 160) };
+    if (!row || typeof row !== "object") return null;
+    const id = clean(
+      row.planner || row.plannerId || row.planner_id || row.id ||
+      row.username || row.userId || row.user_id || row.code || "",
+      100
+    );
+    const name = clean(
+      row.name || row.plannerName || row.planner_name || row.displayName ||
+      row.display_name || row.fullName || row.full_name || row.doctorName ||
+      row.doctor_name || row.doctor || id,
+      160
+    );
+    return id ? { id, name: name || id } : null;
+  }).filter(Boolean);
+
+  return normalized.filter((item, index) =>
+    normalized.findIndex((candidate) => candidate.id === item.id) === index
+  );
+}
+
+async function loadRecorditPlanners() {
+  const payload = await requestRecordit("available_planners");
+  const planners = normalizeRecorditPlanners(payload);
+  if (!planners.length) {
+    throw new RecorditRequestError(
+      "Recordit did not return a usable dentist list. The booking request is still saved.",
+      502,
+      false
+    );
+  }
+  return planners;
+}
+
+function recorditUtcDateTime(date, time) {
+  const [year, month, day] = date.split("-").map(Number);
+  const [hour, minute] = time.split(":").map(Number);
+  // Recordit expects UTC. Nairobi is UTC+3 throughout the year.
+  const instant = new Date(Date.UTC(year, month - 1, day, hour - 3, minute, 0));
+  const pad = (value) => String(value).padStart(2, "0");
+  return instant.getUTCFullYear() + "-" +
+    pad(instant.getUTCMonth() + 1) + "-" +
+    pad(instant.getUTCDate()) + " " +
+    pad(instant.getUTCHours()) + ":" +
+    pad(instant.getUTCMinutes()) + ":00";
+}
+
+function isPastNairobiDateTime(date, time) {
+  const start = recorditUtcDateTime(date, time).replace(" ", "T") + "Z";
+  return new Date(start).getTime() <= Date.now();
+}
+
+function recorditConfirmed(value) {
+  return value === true || value === 1 || String(value).toLowerCase() === "true";
+}
+
+async function assignBookingToRecordit(data, booking, store, headers) {
+  if (booking.recorditEventNo ||
+      ["recordit_saved", "confirmed", "recordit_saving", "recordit_save_check_required"].includes(booking.status)) {
+    return response(409, {
+      ok: false,
+      error: "A Recordit save has already been started for this request. Refresh the dashboard before taking any further action to avoid creating a duplicate."
+    }, headers);
+  }
+
+  if (booking.status !== "pending_allocation") {
+    return response(409, {
+      ok: false,
+      error: "This request is not waiting for dentist allocation."
+    }, headers);
+  }
+
+  const plannerId = clean(data.plannerId, 100);
+  const confirmedDate = clean(data.confirmedDate, 10);
+  const confirmedTime = clean(data.confirmedTime, 5);
+
+  if (!plannerId || !isValidDate(confirmedDate) ||
+      confirmedDate < nairobiDate(new Date()) || !isValidTime(confirmedTime) ||
+      isPastNairobiDateTime(confirmedDate, confirmedTime)) {
+    return response(400, {
+      ok: false,
+      error: "Choose a dentist and a future appointment date and time."
+    }, headers);
+  }
+
+  let planners;
+  let settings;
+  try {
+    planners = await loadRecorditPlanners();
+    settings = await requestRecordit("access_settings");
+  } catch (error) {
+    return response(error && error.statusCode && error.statusCode < 500 ? error.statusCode : 502, {
+      ok: false,
+      error: error && error.message
+        ? error.message
+        : "Could not check the Recordit dentist list and appointment settings."
+    }, headers);
+  }
+
+  const planner = planners.find((item) => item.id === plannerId);
+  if (!planner) {
+    return response(400, {
+      ok: false,
+      error: "That dentist is no longer available in Recordit. Refresh the dashboard and choose from the updated list."
+    }, headers);
+  }
+
+  const slotDuration = Number(settings && settings.slotDuration);
+  if (!Number.isFinite(slotDuration) || slotDuration < 1 || slotDuration > 240) {
+    return response(502, {
+      ok: false,
+      error: "Recordit did not return a valid appointment duration. No appointment was created."
+    }, headers);
+  }
+
+  const start = recorditUtcDateTime(confirmedDate, confirmedTime);
+  const [year, month, day, hour, minute] = start.match(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):00$/).slice(1).map(Number);
+  const endInstant = new Date(Date.UTC(year, month - 1, day, hour, minute + slotDuration, 0));
+  const pad = (value) => String(value).padStart(2, "0");
+  const end = endInstant.getUTCFullYear() + "-" +
+    pad(endInstant.getUTCMonth() + 1) + "-" +
+    pad(endInstant.getUTCDate()) + " " +
+    pad(endInstant.getUTCHours()) + ":" +
+    pad(endInstant.getUTCMinutes()) + ":00";
+
+  booking.status = "recordit_saving";
+  booking.assignedDentist = planner.name;
+  booking.plannerId = planner.id;
+  booking.confirmedDate = confirmedDate;
+  booking.confirmedTime = confirmedTime;
+  booking.recorditSaveStartedAt = new Date().toISOString();
+  booking.recorditSaveError = null;
+  booking.updatedAt = booking.recorditSaveStartedAt;
+
+  try {
+    await saveBooking(store, booking);
+  } catch {
+    return response(500, {
+      ok: false,
+      error: "We could not lock this request before sending it to Recordit. No appointment was sent. Refresh the dashboard and check the request state."
+    }, headers);
+  }
+
+  let saved;
+  try {
+    saved = await requestRecordit("save_appointment", {
+      start,
+      end,
+      planner: planner.id,
+      name: clean(booking.name, 120),
+      phone: normalizePhone(booking.phone),
+      purpose: clean(booking.suggestedVisit || booking.service, 200)
+    });
+  } catch (error) {
+    if (!error || !error.uncertain) {
+      booking.status = "pending_allocation";
+      booking.recorditSaveError = error && error.message ? error.message : "Recordit rejected the appointment.";
+      booking.updatedAt = new Date().toISOString();
+      try { await saveBooking(store, booking); } catch {}
+      return response(error && error.statusCode && error.statusCode < 500 ? error.statusCode : 502, {
+        ok: false,
+        error: booking.recorditSaveError
+      }, headers);
+    }
+
+    booking.status = "recordit_save_check_required";
+    booking.recorditSaveError = error.message;
+    booking.updatedAt = new Date().toISOString();
+    try { await saveBooking(store, booking); } catch {}
+    return response(502, {
+      ok: false,
+      status: booking.status,
+      requestId: booking.id,
+      error: "Recordit could not confirm whether it saved this appointment. The system has paused retries to avoid a duplicate. Do not assign this request again until its Recordit status has been checked."
+    }, headers);
+  }
+
+  const eventNo = saved && saved.eventNo;
+  if (eventNo === undefined || eventNo === null || String(eventNo).trim() === "") {
+    booking.status = "recordit_save_check_required";
+    booking.recorditSaveError = "Recordit returned no appointment reference.";
+    booking.updatedAt = new Date().toISOString();
+    try { await saveBooking(store, booking); } catch {}
+    return response(502, {
+      ok: false,
+      status: booking.status,
+      requestId: booking.id,
+      error: "Recordit returned no appointment reference. Its save result may be incomplete, so retries are paused to avoid a duplicate."
+    }, headers);
+  }
+
+  const isConfirmed = recorditConfirmed(saved.confirmed);
+  booking.recorditEventNo = String(eventNo);
+  booking.recorditConfirmed = isConfirmed;
+  booking.status = isConfirmed ? "confirmed" : "recordit_saved";
+  booking.confirmedAt = isConfirmed ? new Date().toISOString() : null;
+  booking.updatedAt = new Date().toISOString();
+  booking.patientConfirmation = {
+    channel: booking.confirmationChannel,
+    configured: false,
+    sent: false,
+    attemptedAt: null,
+    providerStatus: isConfirmed ? null : "Not sent because Recordit did not report the appointment as confirmed."
+  };
+
+  try {
+    await saveBooking(store, booking);
+  } catch {
+    // The Recordit appointment exists. Keep the record in its saved/locked state
+    // so the dashboard cannot create a second appointment on a blind retry.
+    return response(500, {
+      ok: false,
+      status: booking.status,
+      requestId: booking.id,
+      recorditEventNo: booking.recorditEventNo,
+      error: "Recordit saved the appointment, but the booking dashboard could not update its local record. Do not submit the assignment again; refresh and check the request."
+    }, headers);
+  }
+
+  if (isConfirmed) {
+    const notification = await sendPatientConfirmation(booking);
+    booking.patientConfirmation = {
+      channel: booking.confirmationChannel,
+      configured: notification.configured,
+      sent: notification.sent,
+      attemptedAt: new Date().toISOString(),
+      providerStatus: notification.providerStatus || null
+    };
+    booking.updatedAt = new Date().toISOString();
+    try { await saveBooking(store, booking); } catch {}
+  }
+
+  return response(200, {
+    ok: true,
+    status: booking.status,
+    requestId: booking.id,
+    assignedDentist: booking.assignedDentist,
+    confirmedDate: booking.confirmedDate,
+    confirmedTime: booking.confirmedTime,
+    recorditEventNo: booking.recorditEventNo,
+    recorditConfirmed: isConfirmed,
+    patientConfirmation: booking.patientConfirmation,
+    message: isConfirmed
+      ? (booking.patientConfirmation && booking.patientConfirmation.sent
+        ? "Recordit confirmed the appointment and the patient notification was accepted by the provider."
+        : "Recordit confirmed the appointment, but the patient notification was not sent. Check the notification provider and retry.")
+      : "The appointment was saved to Recordit, but Recordit did not mark it as confirmed. No patient confirmation has been sent."
+  }, headers);
 }
 
 function isAuthorized(headers) {
