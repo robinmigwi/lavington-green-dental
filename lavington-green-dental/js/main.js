@@ -717,11 +717,11 @@ if (booking) {
           body: JSON.stringify({ date: date.value })
         });
         const data = await response.json().catch(() => ({}));
+        if (data.maxDate) date.max = data.maxDate;
         if (!response.ok || !data.ok) {
           throw new Error(data.error || 'We could not load available appointment times.');
         }
 
-        if (data.maxDate) date.max = data.maxDate;
         state.availableSlots = Array.isArray(data.slots) ? data.slots : [];
         time.innerHTML = '';
 
