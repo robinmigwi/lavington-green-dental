@@ -1,5 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
 import { connectLambda, getStore } from "@netlify/blobs";
+import { sendWhatsAppText } from "./_shared/whatsapp.mjs";
 
 const STORE_NAME = "appointment-requests";
 const NAMESPACE = safeNamespace(process.env.BOOKING_DATA_NAMESPACE || "preview");
@@ -577,6 +578,13 @@ function isAuthorized(headers) {
 async function sendPatientConfirmation(booking) {
   if (booking.confirmationChannel === "email") {
     return sendConfirmationEmail(booking);
+  }
+  if (booking.confirmationChannel === "whatsapp") {
+    const message = "Lavington Green Dental Suite: Your appointment is confirmed for " +
+      formatDate(booking.confirmedDate) + " at " + formatTime(booking.confirmedTime) +
+      " EAT with " + booking.assignedDentist + ". Reference: " + booking.recorditEventNo +
+      ". Contact the clinic if you need to make a change.";
+    return sendWhatsAppText(booking.phone, message);
   }
   return sendConfirmationSms(booking);
 }
