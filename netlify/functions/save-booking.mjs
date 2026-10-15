@@ -1,4 +1,4 @@
-import { getStore } from "@netlify/blobs";
+import { connectLambda, getStore } from "@netlify/blobs";
 
 const STORE_NAME = "appointment-requests";
 const NAMESPACE = safeNamespace(process.env.BOOKING_DATA_NAMESPACE || "preview");
@@ -98,6 +98,8 @@ export const handler = async (event) => {
   };
 
   try {
+    // Initialize Netlify Blobs for this Lambda-compatible function invocation.
+    connectLambda(event);
     const store = getStore(STORE_NAME);
     await store.setJSON(requestId, booking, {
       metadata: {
@@ -139,6 +141,7 @@ export const handler = async (event) => {
   booking.updatedAt = new Date().toISOString();
 
   try {
+    connectLambda(event);
     const store = getStore(STORE_NAME);
     await store.setJSON(requestId, booking, {
       metadata: {
