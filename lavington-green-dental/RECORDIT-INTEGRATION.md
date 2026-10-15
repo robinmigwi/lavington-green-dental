@@ -1,69 +1,85 @@
-# Recordit website booking integration
+# Lavington Green Dental: request-first appointment workflow
 
-This branch connects the appointment concierge to Recordit through Netlify Functions. The Recordit API key stays on the server and must never be placed in browser JavaScript.
+This branch is designed for the case where Recordit does not provide a suitable unassigned appointment/request endpoint.
+
+## Workflow
+
+1. The patient completes the website concierge. They do not choose a dentist. They enter their contact details, service/concern, preferred date and time, and choose whether appointment confirmation should be sent by SMS or email.
+2. The \`save-booking\` Netlify Function saves the request to Netlify Blobs as \`pending_allocation\`. It does **not** create an appointment in Recordit.
+3. The clinic receives an email alert and a WhatsApp alert (when those channels are configured). Alerts include a request reference, patient contact, service and preferred date/time; the patient's concern and additional notes are not included in these alerts.
+4. The administrator opens the password-protected \`/admin-bookings.html\` dashboard and reviews the request. The administrator independently allocates the dentist and creates/confirms the actual appointment in Recordit.
+5. After the administrator verifies the Recordit appointment, they enter the assigned dentist, final date/time and Recordit event number in the dashboard, then tick the confirmation checkbox and submit. The server marks the request confirmed and sends the patient an SMS or email according to the patient's preference.
+6. If the patient notification fails, the request remains confirmed, the dashboard reports the failure, and the administrator can retry the notification. The retry does not create or change the appointment in Recordit.
+
+The dashboard never creates or updates appointments in Recordit. Recordit remains the clinic's source of truth for the actual dentist allocation and confirmed appointment.
 
 ## Netlify environment variables
 
-Configure these in the Netlify site settings. Use the **Deploy previews** scope for the initial sample-clinic test. Do not put a sample-clinic token in the Production scope.
+Configure these in **Project configuration > Environment variables**. They must be available to Netlify Functions at runtime. Use **Deploy Previews** for the initial sample-clinic tests and keep values/context separate from Production.
 
-### Recordit
+### Request data separation
 
-- \`RECORDIT_API_KEY\` — required; the Bearer token for the clinic being tested.
-- \`RECORDIT_API_BASE_URL\` — optional; defaults to \`https://api.recordit.ke/ai_assist\`. If supplied, use the base path ending in \`/ai_assist\`, without an individual endpoint.
+- \`BOOKING_DATA_NAMESPACE\` — set to \`preview\` for Deploy Previews and \`production\` for Production. The code defaults to \`preview\`; explicitly set \`production\` before publishing this workflow to the live site, to keep the preview request list separate from live requests.
+- \`BOOKING_ADMIN_TOKEN\` — required for the private dashboard and administrator endpoint. Use a randomly generated secret of at least 32 characters. Set a different token for Deploy Previews and Production. This is **not** the Recordit API key.
 
-### Clinic email alert
+Requests are stored in the site-wide \`appointment-requests\` Netlify Blobs store and are separated by namespace prefix. The dashboard's API only lists records for its current namespace. The administrator token must never be written into the repository or shared in the browser URL.
 
-The implementation uses Resend's email API.
+### Clinic email alert and patient email confirmation
+
+The implementation uses the Resend email API for both clinic alerts and patient confirmations by email.
 
 - \`RESEND_API_KEY\` — Resend API key.
-- \`BOOKING_EMAIL_FROM\` — sender address verified in Resend, for example a bookings address on the clinic's domain.
+- \`BOOKING_EMAIL_FROM\` — sender email address verified in Resend.
 - \`BOOKING_NOTIFICATION_EMAIL\` — one or more clinic inboxes, separated by commas.
 
-If these variables are not configured, the appointment can still be saved in Recordit, but the response reports that the email alert was not configured or sent.
+Clinic alerts are sent when a website request is stored. A patient confirmation email is sent only when the administrator marks a request confirmed in the dashboard, after making/confirming the appointment in Recordit.
 
 ### Clinic WhatsApp alert
 
-The WhatsApp alert is separate from the existing patient WhatsApp message.
+The clinic team alert is sent using the WhatsApp Cloud API.
 
-- \`WHATSAPP_ACCESS_TOKEN\` — existing WhatsApp Cloud API access token.
-- \`WHATSAPP_PHONE_NUMBER_ID\` — WhatsApp Business phone-number ID used by the Cloud API.
+- \`WHATSAPP_ACCESS_TOKEN\` — WhatsApp Cloud API access token.
+- \`WHATSAPP_PHONE_NUMBER_ID\` — WhatsApp Business phone-number ID.
 - \`WHATSAPP_API_VERSION\` — optional; defaults to \`v23.0\`.
-- \`BOOKING_TEAM_WHATSAPP_TO\` — one or more team recipients in international digits-only format, separated by commas, for example \`2547XXXXXXXX\`.
-- \`BOOKING_TEAM_WHATSAPP_TEMPLATE_NAME\` — name of a separately approved WhatsApp message template for internal clinic alerts.
+- \`BOOKING_TEAM_WHATSAPP_TO\` — one or more clinic team recipients in international digits-only format, separated by commas.
+- \`BOOKING_TEAM_WHATSAPP_TEMPLATE_NAME\` — name of the approved WhatsApp template used for the clinic's internal request alert.
 - \`BOOKING_TEAM_WHATSAPP_TEMPLATE_LANGUAGE\` — optional; defaults to \`en_US\`.
 
-The approved template must have six body text parameters in this order:
-
+The approved six-parameter template body order must be:
 1. Patient name
-2. Patient phone number
+2. Patient phone
 3. Service
-4. Appointment date and time in East Africa Time
-5. Assigned planner or doctor
-6. Recordit event number
+4. Preferred date and time
+5. Status (Pending dentist allocation)
+6. Website request reference
 
-Create and approve this template in WhatsApp Manager before enabling the alert. Do not reuse the patient-facing appointment confirmation template unless it has exactly this parameter structure.
+Use a template intended for the clinic team alert. Do not reuse a patient-facing appointment confirmation template unless its approved parameter structure is identical.
 
-## What the integration does
+### Patient SMS confirmation
 
-1. The booking form requests live available slots from Recordit for the selected date.
-2. The patient chooses a slot showing the doctor and local appointment time.
-3. On submission, the server checks that the exact slot is still available.
-4. The server creates the appointment through Recordit's \`save_appointment\` endpoint.
-5. After Recordit returns an event number, the server best-effort stores a local audit copy and attempts the clinic email and WhatsApp alerts.
-6. The existing patient-facing WhatsApp confirmation flow remains separate.
+SMS confirmation uses Africa's Talking. This is sent only after the administrator marks the request confirmed.
 
-Only the appointment reference and minimal booking details are included in clinic alerts. The patient's concern and extra notes are sent to the Recordit appointment purpose, not the WhatsApp or email alerts.
+- \`AT_USERNAME\` — Africa's Talking application username.
+- \`AT_API_KEY\` — Africa's Talking API key.
+- \`AT_SENDER_ID\` — optional approved sender ID, if the account uses one.
 
-Recordit may return \`confirmed: false\`. In that case the website should describe the submission as received or awaiting confirmation, not as a confirmed appointment. A failed notification does not reverse a successful Recordit booking; the function response includes notification status fields.
+An Africa's Talking account, available SMS balance and any required sender ID approval are needed. If these values are missing, the appointment can still be marked confirmed in the dashboard, but patient SMS delivery will be shown as unsuccessful so it can be configured and retried.
 
-## Sample-clinic test sequence
+### Recordit key
 
-1. Add the sample-clinic token to the Netlify **Deploy previews** environment variable scope.
-2. Configure the Resend variables and the approved WhatsApp team template if testing notifications.
-3. Open the Netlify deploy preview and select a date. Confirm the time options are fetched live and include the doctor.
-4. Submit fictional patient details for a slot returned by Recordit.
-5. Confirm the appointment appears in the sample clinic, and check the email and WhatsApp recipients.
-6. Confirm the page says the appointment is awaiting confirmation when Recordit returns \`confirmed: false\`.
-7. Only after the sample-clinic test passes, configure the appropriate production Recordit token in the Production scope and test under the clinic's approval.
+This request-first workflow deliberately does not call Recordit's \`save_appointment\` endpoint because doing so would assign a dentist before the administrator has reviewed the request. \`RECORDIT_API_KEY\` and \`RECORDIT_API_BASE_URL\` are not used by the website request-save or admin-confirmation functions in this design. The administrator uses Recordit manually before confirming the request in the dashboard.
 
-Do not use real patient data for the initial preview test.
+## Preview test checklist
+
+1. Configure \`BOOKING_DATA_NAMESPACE=preview\` and a random \`BOOKING_ADMIN_TOKEN\` in the Deploy Previews context.
+2. Configure the Resend variables and the approved team WhatsApp template if testing clinic alerts.
+3. Configure Africa's Talking credentials if testing patient SMS confirmation.
+4. Open the Deploy Preview and submit a request using fictional details, choosing SMS or email as the patient confirmation method.
+5. Verify the website states that the request has been received and is **not confirmed**.
+6. Open \`/admin-bookings.html\` on the same preview host and sign in with the admin token. Confirm the new request appears under Pending dentist allocation.
+7. In the sample clinic, have the administrator allocate a dentist and create/confirm the appointment in Recordit manually.
+8. In the dashboard, enter the assigned dentist, final date/time, and Recordit event number. Tick the confirmation checkbox and submit.
+9. Verify the patient receives the chosen email/SMS only at this final step. If delivery fails, configure the relevant provider and retry.
+10. Keep Production untouched until this whole preview workflow is verified.
+
+Use only fictional patient data for preview tests. Do not paste API tokens into GitHub, website JavaScript, or support messages.
