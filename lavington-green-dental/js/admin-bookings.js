@@ -245,7 +245,12 @@
         dataBlock("Appointment date", formatDate(booking.confirmedDate)) +
         dataBlock("Appointment time", formatTime(booking.confirmedTime) + " EAT") +
         dataBlock("Recordit event number", booking.recorditEventNo) +
-        '</div>';
+        '</div>' +
+        '<form class="admin-confirm-form" data-confirm-form data-request-id="' + escapeHtml(booking.id) + '">' +
+        '<p>First, open this appointment in Recordit and confirm it there. Only use this step after Recordit shows the appointment as confirmed. The patient will then receive the selected confirmation method.</p>' +
+        '<label class="admin-check"><input type="checkbox" name="adminConfirmedInRecordit" required><span>I have verified that this appointment is confirmed in Recordit.</span></label>' +
+        '<div class="admin-actions"><button type="submit" class="btn btn-primary">Mark confirmed and send patient notification</button></div>' +
+        '<div class="admin-form-message" aria-live="polite"></div></form>';
     } else if (saveCheckRequired || savingInRecordit) {
       html += '<div class="admin-notice error">' +
         (saveCheckRequired
