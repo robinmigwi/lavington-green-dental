@@ -90,9 +90,21 @@ export const handler = async (event) => {
 
     return response(200, {
       ok: true,
+      clinicName: String(settings.clinicName || ""),
       date,
+      daysAvailable,
       maxDate,
       slotDuration: Number(settings.slotDuration) || 60,
+      configuredPlanners: Array.isArray(settings.availablePlanners)
+        ? settings.availablePlanners.map((planner) => ({
+            id: String(planner && planner.id || ""),
+            label: String(planner && planner.label || "")
+          }))
+        : [],
+      returnedPlanners: availability.map((planner) => ({
+        id: String(planner && planner.id || ""),
+        label: String(planner && planner.label || "")
+      })),
       slots
     }, headers);
   } catch {
