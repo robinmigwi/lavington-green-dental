@@ -179,9 +179,17 @@ function isAuthorized(headers) {
   const match = String(authHeader).match(/^Bearer\s+(.+)$/i);
   if (!match || expected.length < 24) return false;
 
-  const provided = match[1];
-  const a = Buffer.from(provided);
-  const b = Buffer.from(expected);
+  let provided;
+  try {
+    // The browser percent-encodes the token so Unicode characters are never
+    // placed directly in an HTTP header. Decode before comparing with the secret.
+    provided = decodeURIComponent(match[1]);
+  } catch {
+    return false;
+  }
+
+  const a = Buffer.from(provided, "utf8");
+  const b = Buffer.from(expected, "utf8");
   if (a.length !== b.length) return false;
   return timingSafeEqual(a, b);
 }
