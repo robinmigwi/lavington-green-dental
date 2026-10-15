@@ -1,6 +1,8 @@
 import { getStore } from "@netlify/blobs";
 
-const API_ROOT = (process.env.RECORDIT_API_BASE_URL || "https://api.recordit.ke/ai_assist").replace(/\/+$/, "");
+const STORE_NAME = "appointment-requests";
+const NAMESPACE = safeNamespace(process.env.BOOKING_DATA_NAMESPACE || "preview");
+const REQUEST_PREFIX = "request-" + NAMESPACE + "-";
 
 export const handler = async (event) => {
   const headers = {
@@ -31,194 +33,140 @@ export const handler = async (event) => {
   const concern = clean(data.concern, 1200);
   const message = clean(data.message, 1200);
   const feeling = clean(data.feeling, 120);
-  const preferredDate = clean(data.preferred_date, 40);
-  const preferredTime = clean(data.preferred_time, 40);
-  const start = toSqlTime(data.start);
-  const end = toSqlTime(data.end);
-  const planner = clean(data.planner, 120);
+  const preferredDate = clean(data.preferred_date, 10);
+  const preferredTime = clean(data.preferred_time, 20).toLowerCase();
+  const confirmationChannel = clean(data.confirmation_channel, 12).toLowerCase();
 
-  if (!name || !phone || !service || !concern || !preferredDate || !preferredTime || !feeling) {
-    return response(400, { ok: false, error: "Please complete the required booking details." }, headers);
-  }
-
-  if (!start || !end || !planner) {
-    return response(400, { ok: false, error: "Please choose an available appointment time before submitting." }, headers);
-  }
-
-  const apiKey = process.env.RECORDIT_API_KEY;
-  if (!apiKey) {
-    return response(503, {
+  if (!name || !phone || !(suggestedVisit || service) || !concern || !preferredDate || !preferredTime || !feeling) {
+    return response(400, {
       ok: false,
-      error: "Online booking is not configured yet. Please contact the clinic directly."
+      error: "Please complete the required booking details."
     }, headers);
   }
 
-  try {
-    const date = start.slice(0, 10);
-    const availability = await recorditPost("available_slots", apiKey, {
-      startInclusive: date + " 00:00:00",
-      endExclusive: addDays(date, 1) + " 00:00:00",
-      plannerId: planner
-    });
-
-    const plannerRecord = Array.isArray(availability)
-      ? availability.find((item) => String(item && item.id || "") === planner)
-      : null;
-    const availableSlots = plannerRecord && Array.isArray(plannerRecord.slots) ? plannerRecord.slots : [];
-    const slotStillAvailable = availableSlots.some((slot) =>
-      toSqlTime(slot && slot.start) === start && toSqlTime(slot && slot.end) === end
-    );
-
-    if (!slotStillAvailable) {
-      return response(409, {
-        ok: false,
-        error: "That time has just become unavailable. Please choose another available appointment."
-      }, headers);
-    }
-
-    const purpose = clean([
-      "Service: " + (suggestedVisit || service),
-      concern ? "Patient concern: " + concern : "",
-      message ? "Additional note: " + message : ""
-    ].filter(Boolean).join(". "), 1000);
-
-    let appointment;
-    try {
-      appointment = await recorditPost("save_appointment", apiKey, {
-        start,
-        end,
-        planner,
-        name,
-        phone,
-        purpose
-      });
-    } catch (error) {
-      const conflict = /double booking|already booked|slot.*unavailable|not available/i.test(String(error.message || ""));
-      return response(conflict ? 409 : 502, {
-        ok: false,
-        error: conflict
-          ? "That time has just become unavailable. Please choose another available appointment."
-          : "Recordit could not save the appointment. Please try again or contact the clinic."
-      }, headers);
-    }
-
-    if (!appointment || !appointment.eventNo) {
-      return response(502, {
-        ok: false,
-        error: "Recordit did not return an appointment reference. Please contact the clinic before submitting again."
-      }, headers);
-    }
-
-    const eventNo = appointment.eventNo;
-    const confirmed = appointment.confirmed === true;
-    const plannerLabel = String(plannerRecord && plannerRecord.label || planner);
-    const localDateTime = formatNairobiDateTime(start);
-    const bookingId = String(eventNo);
-    const booking = {
-      id: bookingId,
-      recorditEventNo: eventNo,
-      status: confirmed ? "confirmed" : "pending_confirmation",
-      confirmed,
-      createdAt: new Date().toISOString(),
-      name,
-      phone,
-      email,
-      service,
-      suggestedVisit,
-      concern,
-      preferredDate,
-      preferredTime,
-      feeling,
-      message,
-      planner,
-      plannerLabel,
-      start,
-      end,
-      source: "Lavington Green Dental Suite website"
-    };
-
-    try {
-      const store = getStore("appointment-requests");
-      await store.setJSON(bookingId, booking, {
-        metadata: {
-          status: booking.status,
-          service,
-          createdAt: booking.createdAt,
-          recorditEventNo: String(eventNo)
-        }
-      });
-    } catch {
-      // Recordit already owns the appointment. A local audit-store failure must not
-      // make the website report failure or encourage a duplicate submission.
-    }
-
-    const alertDetails = {
-      eventNo: String(eventNo),
-      name,
-      phone,
-      service: suggestedVisit || service,
-      localDateTime,
-      plannerLabel
-    };
-
-    const [emailNotification, whatsappNotification] = await Promise.all([
-      sendTeamEmail(alertDetails),
-      sendTeamWhatsApp(alertDetails)
-    ]);
-
-    return response(200, {
-      ok: true,
-      saved: true,
-      bookingId,
-      recorditEventNo: eventNo,
-      confirmed,
-      plannerLabel,
-      notificationStatus: {
-        clinicEmail: emailNotification,
-        clinicWhatsApp: whatsappNotification
-      }
-    }, headers);
-  } catch {
-    return response(502, {
+  if (confirmationChannel !== "sms" && confirmationChannel !== "email") {
+    return response(400, {
       ok: false,
-      error: "We could not complete the booking with Recordit. Please try again or contact the clinic."
+      error: "Choose whether you would like confirmation by text message or email."
     }, headers);
   }
-};
 
-async function recorditPost(endpoint, apiKey, body) {
-  const options = {
-    method: "POST",
-    headers: { "Authorization": "Bearer " + apiKey }
+  if (confirmationChannel === "email" && !isValidEmail(email)) {
+    return response(400, {
+      ok: false,
+      error: "Enter a valid email address to receive appointment confirmation by email."
+    }, headers);
+  }
+
+  if (!isValidDate(preferredDate) || preferredDate < nairobiDate(new Date())) {
+    return response(400, {
+      ok: false,
+      error: "Choose today or a future preferred date."
+    }, headers);
+  }
+
+  if (!isValidPreferredTime(preferredTime)) {
+    return response(400, {
+      ok: false,
+      error: "Choose a valid preferred appointment time."
+    }, headers);
+  }
+
+  const requestId = REQUEST_PREFIX + crypto.randomUUID();
+  const booking = {
+    id: requestId,
+    status: "pending_allocation",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    name,
+    phone,
+    email,
+    confirmationChannel,
+    service,
+    suggestedVisit,
+    concern,
+    preferredDate,
+    preferredTime,
+    feeling,
+    message,
+    source: "Lavington Green Dental Suite website",
+    patientConfirmation: { sent: false, channel: confirmationChannel },
+    clinicNotifications: {
+      email: { configured: false, sent: false },
+      whatsapp: { configured: false, sent: false }
+    }
   };
 
-  if (body !== undefined) {
-    options.headers["Content-Type"] = "application/json";
-    options.body = JSON.stringify(body);
-  }
-
-  const result = await fetch(API_ROOT + "/" + endpoint, {
-    ...options,
-    signal: AbortSignal.timeout(12000)
-  });
-
-  let payload;
   try {
-    payload = await result.json();
+    const store = getStore(STORE_NAME);
+    await store.setJSON(requestId, booking, {
+      metadata: {
+        status: booking.status,
+        service: suggestedVisit || service,
+        createdAt: booking.createdAt,
+        namespace: NAMESPACE
+      },
+      onlyIfNew: true
+    });
   } catch {
-    payload = null;
+    return response(500, {
+      ok: false,
+      error: "We could not save your appointment request. Please try again or contact the clinic."
+    }, headers);
   }
 
-  if (!result.ok) {
-    const error = new Error(payload && payload.error ? String(payload.error) : "Recordit request failed.");
-    error.statusCode = result.status;
-    throw error;
+  // Notify the clinic only after the request is safely stored. Neither notification
+  // confirms a patient's appointment.
+  const alert = {
+    requestId,
+    name,
+    phone,
+    service: suggestedVisit || service,
+    preferredDate,
+    preferredTime,
+    status: "Pending dentist allocation"
+  };
+
+  const [emailNotification, whatsappNotification] = await Promise.all([
+    sendClinicEmail(alert),
+    sendClinicWhatsApp(alert)
+  ]);
+
+  booking.clinicNotifications = {
+    email: emailNotification,
+    whatsapp: whatsappNotification
+  };
+  booking.updatedAt = new Date().toISOString();
+
+  try {
+    const store = getStore(STORE_NAME);
+    await store.setJSON(requestId, booking, {
+      metadata: {
+        status: booking.status,
+        service: suggestedVisit || service,
+        createdAt: booking.createdAt,
+        namespace: NAMESPACE
+      }
+    });
+  } catch {
+    // The original request was saved successfully. Return its reference even if
+    // recording notification delivery status fails.
   }
 
-  return payload;
-}
+  return response(200, {
+    ok: true,
+    saved: true,
+    requestId,
+    status: booking.status,
+    confirmationChannel,
+    clinicNotifications: {
+      email: emailNotification,
+      whatsapp: whatsappNotification
+    }
+  }, headers);
+};
 
-async function sendTeamEmail(booking) {
+async function sendClinicEmail(booking) {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.BOOKING_EMAIL_FROM;
   const recipients = String(process.env.BOOKING_NOTIFICATION_EMAIL || "")
@@ -230,26 +178,29 @@ async function sendTeamEmail(booking) {
 
   const subject = "New dental appointment request — " + booking.name;
   const text = [
-    "A new website appointment has been saved in Recordit.",
+    "A new appointment request has been received from the website.",
     "",
-    "Recordit reference: " + booking.eventNo,
+    "Request reference: " + booking.requestId,
     "Patient: " + booking.name,
     "Phone: " + booking.phone,
     "Service: " + booking.service,
-    "Requested appointment: " + booking.localDateTime,
-    "Planner: " + booking.plannerLabel,
+    "Preferred date: " + formatDate(booking.preferredDate),
+    "Preferred time: " + booking.preferredTime,
+    "Status: Pending dentist allocation",
     "",
-    "Recordit currently marks this appointment as unconfirmed."
+    "Please review the request, allocate the dentist in Recordit, and confirm the appointment there before sending patient confirmation.",
+    "The patient's concern and additional notes are available in the authorized booking request dashboard."
   ].join("\n");
 
-  const html = "<p>A new website appointment has been saved in Recordit.</p><dl>" +
-    "<dt><strong>Recordit reference</strong></dt><dd>" + escapeHtml(booking.eventNo) + "</dd>" +
+  const html = "<p>A new appointment request has been received from the website.</p><dl>" +
+    "<dt><strong>Request reference</strong></dt><dd>" + escapeHtml(booking.requestId) + "</dd>" +
     "<dt><strong>Patient</strong></dt><dd>" + escapeHtml(booking.name) + "</dd>" +
     "<dt><strong>Phone</strong></dt><dd>" + escapeHtml(booking.phone) + "</dd>" +
     "<dt><strong>Service</strong></dt><dd>" + escapeHtml(booking.service) + "</dd>" +
-    "<dt><strong>Requested appointment</strong></dt><dd>" + escapeHtml(booking.localDateTime) + "</dd>" +
-    "<dt><strong>Planner</strong></dt><dd>" + escapeHtml(booking.plannerLabel) + "</dd>" +
-    "</dl><p>Recordit currently marks this appointment as unconfirmed.</p>";
+    "<dt><strong>Preferred date</strong></dt><dd>" + escapeHtml(formatDate(booking.preferredDate)) + "</dd>" +
+    "<dt><strong>Preferred time</strong></dt><dd>" + escapeHtml(booking.preferredTime) + "</dd>" +
+    "<dt><strong>Status</strong></dt><dd>Pending dentist allocation</dd>" +
+    "</dl><p>Please review the request, allocate the dentist in Recordit, and confirm the appointment there before sending patient confirmation.</p>";
 
   try {
     const result = await fetch("https://api.resend.com/emails", {
@@ -267,7 +218,7 @@ async function sendTeamEmail(booking) {
   }
 }
 
-async function sendTeamWhatsApp(booking) {
+async function sendClinicWhatsApp(booking) {
   const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
   const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
   const templateName = process.env.BOOKING_TEAM_WHATSAPP_TEMPLATE_NAME;
@@ -282,13 +233,16 @@ async function sendTeamWhatsApp(booking) {
 
   const url = "https://graph.facebook.com/" + apiVersion + "/" +
     encodeURIComponent(phoneNumberId) + "/messages";
+  // Keep the existing six-parameter team template shape:
+  // patient, phone, service, requested datetime, allocation status, request reference.
+  const preferredDateTime = formatDate(booking.preferredDate) + " at " + booking.preferredTime;
   const parameters = [
     booking.name,
     booking.phone,
     booking.service,
-    booking.localDateTime,
-    booking.plannerLabel,
-    booking.eventNo
+    preferredDateTime,
+    booking.status,
+    booking.requestId
   ].map((value) => ({ type: "text", text: String(value || "-").slice(0, 200) }));
 
   const outcomes = await Promise.all(recipients.map(async (recipient) => {
@@ -321,7 +275,7 @@ async function sendTeamWhatsApp(booking) {
     configured: true,
     sent: outcomes.some(Boolean),
     recipientCount: recipients.length,
-    deliveredRequests: outcomes.filter(Boolean).length
+    acceptedRequests: outcomes.filter(Boolean).length
   };
 }
 
@@ -333,6 +287,10 @@ function clean(value, maxLength) {
   return String(value == null ? "" : value).trim().slice(0, maxLength);
 }
 
+function safeNamespace(value) {
+  return String(value || "preview").toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 32) || "preview";
+}
+
 function normalizePhone(value) {
   const raw = String(value == null ? "" : value).replace(/[^\d+]/g, "");
   if (raw.startsWith("+254")) return raw.slice(1);
@@ -341,40 +299,45 @@ function normalizePhone(value) {
   return raw.replace(/\D/g, "");
 }
 
-function toSqlTime(value) {
-  const time = String(value || "").trim().replace("T", " ").replace(/Z$/, "").replace(/\.\d+$/, "");
-  return /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(time) ? time : "";
+function isValidEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || "").trim());
 }
 
-function addDays(value, amount) {
-  const date = new Date(value + "T00:00:00Z");
-  date.setUTCDate(date.getUTCDate() + amount);
-  return date.toISOString().slice(0, 10);
+function isValidDate(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const parsed = new Date(value + "T00:00:00Z");
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
 }
 
-function formatNairobiDateTime(value) {
-  const date = new Date(value.replace(" ", "T") + "Z");
-  if (Number.isNaN(date.getTime())) return value;
-  const datePart = new Intl.DateTimeFormat("en-KE", {
+function nairobiDate(value) {
+  const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: "Africa/Nairobi",
-    day: "numeric",
-    month: "short",
-    year: "numeric"
-  }).format(date);
-  const timePart = new Intl.DateTimeFormat("en-KE", {
-    timeZone: "Africa/Nairobi",
-    hour: "numeric",
-    minute: "2-digit"
-  }).format(date).toLowerCase();
-  return datePart + " at " + timePart + " EAT";
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(value);
+  const part = (type) => parts.find((item) => item.type === type).value;
+  return part("year") + "-" + part("month") + "-" + part("day");
+}
+
+function isValidPreferredTime(value) {
+  return [
+    "9:00 am","9:30 am","10:00 am","10:30 am","11:00 am","11:30 am",
+    "12:00 pm","12:30 pm","1:00 pm","1:30 pm","2:00 pm","2:30 pm",
+    "3:00 pm","3:30 pm","4:00 pm","4:30 pm"
+  ].includes(value);
+}
+
+function formatDate(value) {
+  if (!isValidDate(value)) return value;
+  const [year, month, day] = value.split("-").map(Number);
+  return new Intl.DateTimeFormat("en-KE", {
+    day: "numeric", month: "long", year: "numeric", timeZone: "Africa/Nairobi"
+  }).format(new Date(Date.UTC(year, month - 1, day, 12)));
 }
 
 function escapeHtml(value) {
   return String(value == null ? "" : value).replace(/[&<>"']/g, (character) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    "\"": "&quot;",
-    "'": "&#39;"
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;"
   })[character]);
 }
