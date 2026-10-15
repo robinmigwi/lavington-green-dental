@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Appointment requests | Lavington Green Dental Suite</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .admin-wrap{max-width:1040px;margin:0 auto;padding:42px 20px 80px}
+    .admin-heading{display:flex;gap:20px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;margin-bottom:28px}
+    .admin-heading h1{margin:.25rem 0 .5rem}
+    .admin-panel{background:#fff;border:1px solid #e5e0dd;border-radius:16px;padding:22px;margin:18px 0;box-shadow:0 5px 24px rgba(42,25,31,.05)}
+    .admin-panel h2,.admin-panel h3{margin-top:0}
+    .admin-muted{color:#675d60}
+    .admin-login{max-width:540px}
+    .admin-field{display:flex;flex-direction:column;gap:7px;margin:12px 0}
+    .admin-field label{font-weight:600;font-size:.92rem}
+    .admin-field input,.admin-field select,.admin-field textarea{width:100%;border:1px solid #cfc7c5;border-radius:9px;padding:11px 12px;font:inherit;background:white;color:#2d2528}
+    .admin-field textarea{min-height:88px;resize:vertical}
+    .admin-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:16px}
+    .admin-request-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 22px}
+    .admin-data{padding:10px 12px;background:#f8f6f5;border-radius:8px;overflow-wrap:anywhere}
+    .admin-data strong{display:block;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;color:#706366;margin-bottom:4px}
+    .admin-data p{margin:0;white-space:pre-wrap}
+    .admin-status{display:inline-block;border-radius:5px;padding:5px 9px;background:#eee8e4;color:#493638;font-weight:600;font-size:.8rem}
+    .admin-status.pending{background:#fff1d6;color:#714c00}
+    .admin-status.confirmed{background:#e1f2e8;color:#20553b}
+    .admin-notice{padding:12px 14px;border-radius:8px;background:#f4f1ef;margin:14px 0}
+    .admin-notice.error{background:#fff0ed;color:#8a2f23}
+    .admin-notice.success{background:#e9f5ed;color:#20553b}
+    .admin-confirm-form{border-top:1px solid #e8e2df;margin-top:24px;padding-top:20px}
+    .admin-check{display:flex;align-items:flex-start;gap:10px;margin:16px 0;line-height:1.5}
+    .admin-check input{margin-top:5px}
+    .admin-empty{padding:35px 10px;text-align:center}
+    .admin-top-button{background:transparent;border:1px solid #9c898b;color:#442a32;border-radius:8px;padding:9px 13px;font:inherit;cursor:pointer}
+    .admin-small{font-size:.88rem}
+    @media(max-width:680px){.admin-request-grid{grid-template-columns:1fr}.admin-wrap{padding:28px 14px 60px}.admin-panel{padding:17px}}
+  </style>
+</head>
+<body>
+  <header>
+    <nav class="nav">
+      <a class="brand" href="index.html"><img src="assets/logo.png" alt="Lavington Green Dental Suite"></a>
+      <div class="navcta"><a class="btn btn-ghost" href="index.html#book">Open booking form</a></div>
+    </nav>
+  </header>
+
+  <main class="admin-wrap">
+    <div class="admin-heading">
+      <div>
+        <span class="eyebrow">Clinic administration</span>
+        <h1>Appointment requests</h1>
+        <p class="admin-muted">Review requests here. Allocate and confirm the appointment in Recordit first, then use this page to send the patient's confirmation.</p>
+      </div>
+      <div class="admin-actions">
+        <button type="button" class="admin-top-button" id="refresh-button" hidden>Refresh requests</button>
+        <button type="button" class="admin-top-button" id="logout-button" hidden>Log out</button>
+      </div>
+    </div>
+
+    <section class="admin-panel admin-login" id="login-panel">
+      <h2>Administrator sign in</h2>
+      <p class="admin-muted">Use the clinic's private booking dashboard access token. It is not the Recordit API key.</p>
+      <form id="login-form">
+        <div class="admin-field">
+          <label for="admin-token">Administrator access token</label>
+          <input id="admin-token" type="password" autocomplete="current-password" required>
+        </div>
+        <div class="admin-actions">
+          <button class="btn btn-primary" type="submit" id="login-button">Open requests</button>
+        </div>
+        <div id="login-message" aria-live="polite"></div>
+      </form>
+    </section>
+
+    <section id="requests-panel" hidden>
+      <div id="page-message" aria-live="polite"></div>
+      <div id="request-count" class="admin-muted admin-small"></div>
+      <div id="request-list"></div>
+    </section>
+  </main>
+  <script src="js/admin-bookings.js"></script>
+</body>
+</html>
