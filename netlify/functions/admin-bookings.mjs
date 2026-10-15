@@ -292,9 +292,9 @@ function normalizeRecorditPlanners(payload) {
       100
     );
     const name = clean(
-      row.name || row.plannerName || row.planner_name || row.displayName ||
-      row.display_name || row.fullName || row.full_name || row.doctorName ||
-      row.doctor_name || row.doctor || id,
+      row.name || row.label || row.plannerName || row.planner_name ||
+      row.displayName || row.display_name || row.fullName || row.full_name ||
+      row.doctorName || row.doctor_name || row.doctor || id,
       160
     );
     return id ? { id, name: name || id } : null;
