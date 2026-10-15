@@ -92,7 +92,9 @@
       throw new Error("Your administrator token was not accepted. Please sign in again.");
     }
     if (!result.ok || !data.ok) {
-      throw new Error(data.error || "The request could not be completed.");
+      const fallback = "The booking service returned HTTP " + result.status +
+        " without a readable error. Check the Netlify function logs for admin-bookings.";
+      throw new Error(data.error || fallback);
     }
     return data;
   }
