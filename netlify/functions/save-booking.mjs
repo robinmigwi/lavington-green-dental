@@ -177,6 +177,8 @@ async function sendClinicEmail(booking) {
   }
 
   const subject = "New dental appointment request — " + booking.name;
+  const adminBaseUrl = String(process.env.DEPLOY_PRIME_URL || "").replace(/\/+$/, "");
+  const adminDashboardUrl = adminBaseUrl ? adminBaseUrl + "/admin-bookings.html" : "";
   const text = [
     "A new appointment request has been received from the website.",
     "",
@@ -189,8 +191,9 @@ async function sendClinicEmail(booking) {
     "Status: Pending dentist allocation",
     "",
     "Please review the request, allocate the dentist in Recordit, and confirm the appointment there before sending patient confirmation.",
-    "The patient's concern and additional notes are available in the authorized booking request dashboard."
-  ].join("\n");
+    "The patient's concern and additional notes are available in the authorized booking request dashboard.",
+    adminDashboardUrl ? "Open request dashboard: " + adminDashboardUrl : ""
+  ].filter(Boolean).join("\n");
 
   const html = "<p>A new appointment request has been received from the website.</p><dl>" +
     "<dt><strong>Request reference</strong></dt><dd>" + escapeHtml(booking.requestId) + "</dd>" +
@@ -200,7 +203,8 @@ async function sendClinicEmail(booking) {
     "<dt><strong>Preferred date</strong></dt><dd>" + escapeHtml(formatDate(booking.preferredDate)) + "</dd>" +
     "<dt><strong>Preferred time</strong></dt><dd>" + escapeHtml(booking.preferredTime) + "</dd>" +
     "<dt><strong>Status</strong></dt><dd>Pending dentist allocation</dd>" +
-    "</dl><p>Please review the request, allocate the dentist in Recordit, and confirm the appointment there before sending patient confirmation.</p>";
+    "</dl><p>Please review the request, allocate the dentist in Recordit, and confirm the appointment there before sending patient confirmation.</p>" +
+    (adminDashboardUrl ? '<p><a href="' + escapeHtml(adminDashboardUrl) + '">Open the appointment request dashboard</a></p>' : "");
 
   try {
     const result = await fetch("https://api.resend.com/emails", {
