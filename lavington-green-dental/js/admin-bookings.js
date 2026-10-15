@@ -75,7 +75,7 @@
     const options = {
       method,
       headers: {
-        "Authorization": "Bearer " + token,
+        "Authorization": "Bearer " + encodeURIComponent(token),
         "Accept": "application/json"
       }
     };
