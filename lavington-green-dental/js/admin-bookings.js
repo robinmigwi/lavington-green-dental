@@ -52,7 +52,10 @@
   }
 
   function toInputTime(value) {
-    const match = String(value || "").trim().match(/^(\d{1,2}):(\d{2})\s*(am|pm)$/i);
+    const raw = String(value || "").trim();
+    const twentyFourHour = raw.match(/^([01]\d|2[0-3]):([0-5]\d)$/);
+    if (twentyFourHour) return raw;
+    const match = raw.match(/^(\d{1,2}):(\d{2})\s*(am|pm)$/i);
     if (!match) return "";
     let hour = Number(match[1]);
     const minute = Number(match[2]);
