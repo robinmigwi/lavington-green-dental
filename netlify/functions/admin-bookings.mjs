@@ -622,8 +622,10 @@ async function sendConfirmationEmail(booking) {
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#F7F1E8;padding:28px 12px;">
     <tr><td align="center">
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #EEE4D7;">
+        <tr><td style="background-color:#ffffff;padding:22px 32px 18px;text-align:center;border-bottom:1px solid #EEE4D7;">
+          <img src="https://raw.githubusercontent.com/robinmigwi/lavington-green-dental/main/lavington-green-dental/assets/logo.png" alt="Lavington Green Dental Suite" width="180" style="display:block;width:180px;max-width:100%;height:auto;margin:0 auto;border:0;">
+        </td></tr>
         <tr><td style="background-color:#65070F;padding:30px 32px 26px;text-align:left;">
-          <p style="margin:0 0 8px;color:#F0AE52;font-size:11px;letter-spacing:2px;font-weight:bold;">LAVINGTON GREEN</p>
           <h1 style="margin:0;color:#ffffff;font-size:25px;line-height:1.25;font-weight:700;">Your appointment is confirmed</h1>
           <p style="margin:10px 0 0;color:#F7F1E8;font-size:14px;line-height:1.6;">Thank you for choosing Lavington Green Dental Suite.</p>
         </td></tr>
