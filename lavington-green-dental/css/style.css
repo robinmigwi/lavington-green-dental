@@ -1412,6 +1412,10 @@ header.scrolled .brand img{height:56px;filter:none}
   transition:transform .8s var(--ease);
 }
 .practice-gallery .gallery-item:hover img{transform:scale(1.03)}
+/* Keep the replacement team portrait fully visible in the homepage gallery. */
+.practice-gallery .gallery-item:nth-child(2){background:var(--cream-deep)}
+.practice-gallery .gallery-item:nth-child(2) img{object-fit:contain;object-position:center;padding:12px}
+
 .practice-gallery .gallery-caption{
   position:absolute;
   left:18px;
