@@ -15,6 +15,7 @@
   let token = sessionStorage.getItem(STORAGE_KEY) || "";
   let availablePlanners = [];
   let plannerLoadError = "";
+  let plannerLoadWarning = "";
 
   function escapeHtml(value) {
     return String(value == null ? "" : value).replace(/[&<>"']/g, (character) => ({
@@ -120,12 +121,32 @@
   }
 
   async function loadPlannerChoices() {
+    plannerLoadWarning = "";
     try {
       const data = await apiRequest("GET", undefined, "?resource=planners");
       availablePlanners = Array.isArray(data.planners) ? data.planners : [];
       plannerLoadError = availablePlanners.length
         ? ""
         : "Recordit did not return any available dentists.";
+
+      if (availablePlanners.length === 1 && data.diagnostics) {
+        const diagnostics = data.diagnostics;
+        const relevantPaths = (Array.isArray(diagnostics.settingsKeyPaths)
+          ? diagnostics.settingsKeyPaths
+          : []
+        ).filter((path) => /planner|doctor|dentist|clinician|staff|user|practitioner|calendar/i.test(path)).slice(0, 12);
+        const paths = relevantPaths.length
+          ? relevantPaths.join(", ")
+          : (Array.isArray(diagnostics.settingsTopLevelKeys)
+              ? diagnostics.settingsTopLevelKeys.join(", ")
+              : "No planner related fields were exposed");
+        plannerLoadWarning =
+          "Recordit returned only one selectable dentist. The integration found " +
+          String(diagnostics.availableCount || 0) + " planner(s) in available_planners and " +
+          String(diagnostics.settingsCount || 0) + " in access_settings. " +
+          "Relevant response fields: " + paths +
+          ". If Dr Malit should be selectable, the account's API response or planner permissions may need checking.";
+      }
     } catch (error) {
       availablePlanners = [];
       plannerLoadError = error.message || "Could not load the dentist list from Recordit.";
@@ -139,6 +160,8 @@
         "Appointment requests are available, but the dentist list could not be loaded from Recordit. Assignment is disabled until the connection is restored.",
         "error"
       );
+    } else if (plannerLoadWarning) {
+      showMessage(pageMessage, plannerLoadWarning, "error");
     }
   }
 
