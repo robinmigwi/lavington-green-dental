@@ -130,7 +130,7 @@ export const handler = async (event) => {
   };
 
   const [emailNotification, whatsappNotification] = await Promise.all([
-    sendClinicEmail(alert),
+    sendClinicEmail(alert, event),
     sendClinicWhatsApp(alert)
   ]);
 
@@ -169,7 +169,7 @@ export const handler = async (event) => {
   }, headers);
 };
 
-async function sendClinicEmail(booking) {
+async function sendClinicEmail(booking, event) {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.BOOKING_EMAIL_FROM;
   const configuredRecipients = String(process.env.BOOKING_NOTIFICATION_EMAIL || "")
@@ -187,13 +187,19 @@ async function sendClinicEmail(booking) {
   }
 
   const subject = "New dental appointment request — " + booking.name;
+  // Build the dashboard link from the host that received the booking request.
+  // This keeps preview booking emails on the preview site instead of linking to
+  // the production domain before the feature is released there.
+  const requestHost = trustedDashboardHost(event && event.headers ? event.headers : {});
   const configuredAdminUrl = String(process.env.BOOKING_ADMIN_DASHBOARD_URL || "").trim();
-  const adminBaseUrl = String(
+  const fallbackAdminBaseUrl = String(
     process.env.DEPLOY_PRIME_URL || process.env.URL || ""
   ).replace(/\/+$/, "");
-  const adminDashboardUrl = configuredAdminUrl
-    ? configuredAdminUrl.replace(/\/+$/, "")
-    : (adminBaseUrl ? adminBaseUrl + "/admin-bookings.html" : "");
+  const adminDashboardUrl = requestHost
+    ? "https://" + requestHost + "/admin-bookings.html"
+    : (configuredAdminUrl
+        ? configuredAdminUrl.replace(/\/+$/, "")
+        : (fallbackAdminBaseUrl ? fallbackAdminBaseUrl + "/admin-bookings.html" : ""));
   const text = [
     "A new appointment request has been received from the website.",
     "",
@@ -235,6 +241,29 @@ async function sendClinicEmail(booking) {
   } catch {
     return { configured: true, sent: false };
   }
+}
+
+function trustedDashboardHost(headers) {
+  const rawHost = String(
+    headers.host || headers.Host || headers["x-forwarded-host"] || ""
+  ).split(",")[0].trim();
+  if (!rawHost) return "";
+
+  let hostname;
+  try {
+    hostname = new URL("https://" + rawHost).hostname.toLowerCase();
+  } catch {
+    return "";
+  }
+
+  const allowed =
+    hostname === "lavingtongreendental.co.ke" ||
+    hostname === "www.lavingtongreendental.co.ke" ||
+    hostname === "lavington-green-dental.netlify.app" ||
+    /^deploy-preview-\\d+--lavington-green-dental\\.netlify\\.app$/.test(hostname) ||
+    /^feature-recordit-booking-integration--lavington-green-dental\\.netlify\\.app$/.test(hostname);
+
+  return allowed ? hostname : "";
 }
 
 async function sendClinicWhatsApp(booking) {
