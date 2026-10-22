@@ -323,9 +323,21 @@ function normalizeRecorditPlanners(payload, rootIsPlannerCollection = false) {
 
   function looksLikeId(value) {
     const text = String(value || "").trim();
+    const normalized = cleanKey(text);
+    const reservedKeys = new Set([
+      "name", "label", "displayname", "plannername", "plannerid",
+      "doctorname", "doctorid", "dentistname", "dentistid",
+      "clinicname", "slotduration", "status", "message", "error",
+      "count", "total", "enabled", "active", "success",
+      "availableplanners", "planners", "doctors", "dentists",
+      "accesssettings", "settings"
+    ]);
     return /^\d{1,12}$/.test(text) ||
       /^[a-f0-9]{8}-[a-f0-9-]{20,}$/i.test(text) ||
-      /^(planner|doctor|dentist|provider|user|staff|calendar)[_-]?[a-z0-9_-]+$/i.test(text);
+      /^(planner|doctor|dentist|provider|user|staff|calendar)(?:[_-][a-z0-9_-]+|[0-9]+)$/i.test(text) ||
+      (/^[a-z0-9_-]{1,64}$/i.test(text) &&
+        !reservedKeys.has(normalized) &&
+        !/(name|label|duration|status|message|error|count|total|enabled|active|success|settings|email|phone|date|time|url|type|role|description|clinic|service)$/i.test(text));
   }
 
   function looksLikePersonName(value) {
@@ -448,13 +460,31 @@ async function loadRecorditPlanners() {
   // so an unexpectedly incomplete roster can be diagnosed without exposing API data.
   const topLevelKeys = (payload) =>
     payload && typeof payload === "object" ? Object.keys(payload).slice(0, 40) : [];
+  const keyPaths = (payload) => {
+    const paths = [];
+    const seen = new WeakSet();
+    function walk(value, prefix, depth) {
+      if (!value || typeof value !== "object" || depth > 4 || seen.has(value) || paths.length >= 80) return;
+      seen.add(value);
+      for (const [key, child] of Object.entries(value)) {
+        const path = prefix ? prefix + "." + key : key;
+        paths.push(path);
+        if (paths.length >= 80) break;
+        if (child && typeof child === "object") walk(child, path, depth + 1);
+      }
+    }
+    walk(payload, "", 0);
+    return paths;
+  };
   return {
     planners: merged,
     diagnostics: {
       availableCount: planners.length,
       settingsCount: settingPlanners.length,
       availableTopLevelKeys: topLevelKeys(availablePayload),
-      settingsTopLevelKeys: topLevelKeys(settingsPayload)
+      settingsTopLevelKeys: topLevelKeys(settingsPayload),
+      availableKeyPaths: keyPaths(availablePayload),
+      settingsKeyPaths: keyPaths(settingsPayload)
     }
   };
 }
