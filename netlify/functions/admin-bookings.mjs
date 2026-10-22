@@ -445,6 +445,18 @@ async function loadRecorditPlanners() {
     }
   }
 
+  const configuredPlanners = parseConfiguredRecorditPlanners(
+    process.env.RECORDIT_ADDITIONAL_PLANNERS || ""
+  );
+  for (const planner of configuredPlanners) {
+    const prior = mergedById.get(planner.id);
+    if (!prior) {
+      mergedById.set(planner.id, planner);
+    } else if ((!prior.name || prior.name === prior.id) && planner.name) {
+      mergedById.set(planner.id, { ...prior, name: planner.name });
+    }
+  }
+
   const merged = [...mergedById.values()];
   if (!merged.length) {
     throw new RecorditRequestError(
@@ -484,9 +496,39 @@ async function loadRecorditPlanners() {
       availableTopLevelKeys: topLevelKeys(availablePayload),
       settingsTopLevelKeys: topLevelKeys(settingsPayload),
       availableKeyPaths: keyPaths(availablePayload),
-      settingsKeyPaths: keyPaths(settingsPayload)
+      settingsKeyPaths: keyPaths(settingsPayload),
+      configuredPlannerCount: configuredPlanners.length
     }
   };
+}
+
+function parseConfiguredRecorditPlanners(rawValue) {
+  if (!String(rawValue || "").trim()) return [];
+  let parsed;
+  try {
+    parsed = JSON.parse(String(rawValue));
+  } catch {
+    return [];
+  }
+  const rows = Array.isArray(parsed)
+    ? parsed
+    : (parsed && Array.isArray(parsed.planners) ? parsed.planners : []);
+  const byId = new Map();
+  for (const row of rows) {
+    if (!row || typeof row !== "object" || Array.isArray(row)) continue;
+    const id = clean(
+      row.id || row.plannerId || row.planner_id || row.planner ||
+      row.doctorId || row.doctor_id || row.dentistId || row.dentist_id || "",
+      100
+    );
+    const name = clean(
+      row.name || row.label || row.displayName || row.display_name ||
+      row.doctorName || row.doctor_name || row.dentistName || row.dentist_name || "",
+      160
+    );
+    if (id && name && !byId.has(id)) byId.set(id, { id, name });
+  }
+  return [...byId.values()];
 }
 
 function recorditUtcDateTime(date, time) {
