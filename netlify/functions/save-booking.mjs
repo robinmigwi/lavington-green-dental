@@ -174,10 +174,11 @@ async function sendClinicEmail(booking) {
   const from = process.env.BOOKING_EMAIL_FROM;
   const configuredRecipients = String(process.env.BOOKING_NOTIFICATION_EMAIL || "")
     .split(",").map((value) => value.trim()).filter(Boolean);
-  // Keep the configured clinic inboxes and also route every new request alert
-  // to the inbox the clinic checks most reliably.
+  // Send every booking alert to both clinic inboxes so DigiGuru can compare
+  // the alert received at the clinic's info@ address with the Gmail inbox.
   const recipients = [...new Set([
     ...configuredRecipients,
+    "info@lavingtongreendental.co.ke",
     "lavingtongreendental@gmail.com"
   ])];
 
