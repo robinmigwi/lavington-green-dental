@@ -316,25 +316,36 @@ async function loadRecorditPlanners() {
     );
   }
 
-  // available_planners can return only planner IDs. access_settings contains
-  // the clinic's ID-to-display-name mapping, so combine both responses.
+  // available_planners commonly returns the assignable planner IDs, while
+  // access_settings provides the clinic's planner ID-to-display-name mapping.
+  // Merge the settings roster as a fallback so configured clinic planners are
+  // not silently omitted when the endpoints return different subsets.
   let nameByPlannerId = new Map();
+  let settingPlanners = [];
   try {
     const settings = await requestRecordit("access_settings");
-    const namedPlanners = normalizeRecorditPlanners(settings);
-    nameByPlannerId = new Map(namedPlanners.map((planner) => [
+    settingPlanners = normalizeRecorditPlanners(settings);
+    nameByPlannerId = new Map(settingPlanners.map((planner) => [
       planner.id,
       planner.name
     ]));
   } catch {
-    // Preserve usable planner IDs if names cannot be loaded. Assignment still
-    // uses the planner ID, never the display label.
+    // Keep the available planner list if Recordit settings cannot be loaded.
   }
 
-  return planners.map((planner) => ({
+  const merged = planners.map((planner) => ({
     ...planner,
     name: nameByPlannerId.get(planner.id) || planner.name || planner.id
   }));
+  const knownIds = new Set(merged.map((planner) => planner.id));
+  for (const planner of settingPlanners) {
+    if (!knownIds.has(planner.id)) {
+      merged.push(planner);
+      knownIds.add(planner.id);
+    }
+  }
+
+  return merged;
 }
 
 function recorditUtcDateTime(date, time) {
