@@ -503,7 +503,8 @@ async function assignBookingToRecordit(data, booking, store, headers) {
   let planners;
   let settings;
   try {
-    planners = await loadRecorditPlanners();
+    const plannerResult = await loadRecorditPlanners();
+    planners = plannerResult.planners;
     settings = await requestRecordit("access_settings");
   } catch (error) {
     return response(error && error.statusCode && error.statusCode < 500 ? error.statusCode : 502, {
