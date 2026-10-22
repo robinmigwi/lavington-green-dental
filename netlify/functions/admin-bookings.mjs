@@ -41,8 +41,12 @@ export const handler = async (event) => {
   if (event.httpMethod === "GET" &&
       String((event.queryStringParameters || {}).resource || "") === "planners") {
     try {
-      const planners = await loadRecorditPlanners();
-      return response(200, { ok: true, planners }, headers);
+      const result = await loadRecorditPlanners();
+      return response(200, {
+        ok: true,
+        planners: result.planners,
+        diagnostics: result.diagnostics
+      }, headers);
     } catch (error) {
       return response(error && error.statusCode ? error.statusCode : 502, {
         ok: false,
@@ -269,83 +273,180 @@ async function requestRecordit(endpoint, body) {
   return payload;
 }
 
-function normalizeRecorditPlanners(payload) {
-  let rows = [];
-  if (Array.isArray(payload)) {
-    rows = payload;
-  } else if (payload && Array.isArray(payload.availablePlanners)) {
-    rows = payload.availablePlanners;
-  } else if (payload && Array.isArray(payload.planners)) {
-    rows = payload.planners;
-  } else if (payload && payload.availablePlanners && typeof payload.availablePlanners === "object") {
-    rows = Object.entries(payload.availablePlanners).map(([planner, name]) => ({ planner, name }));
-  } else if (payload && payload.planners && typeof payload.planners === "object") {
-    rows = Object.entries(payload.planners).map(([planner, name]) => ({ planner, name }));
+function normalizeRecorditPlanners(payload, rootIsPlannerCollection = false) {
+  const normalized = [];
+  const collectionKeys = new Set([
+    "availableplanners", "planner", "planners", "plannerlist",
+    "planneraccess", "plannerpermissions", "planneraccounts",
+    "doctors", "dentists", "doctorlist", "dentistlist",
+    "clinicians", "practitioners", "medicalstaff", "providers"
+  ]);
+  const idKeys = [
+    "planner", "plannerId", "planner_id", "plannerID",
+    "doctorId", "doctor_id", "dentistId", "dentist_id",
+    "providerId", "provider_id", "calendarId", "calendar_id",
+    "userId", "user_id", "employeeId", "employee_id",
+    "id", "username", "code"
+  ];
+  const nameKeys = [
+    "name", "label", "plannerName", "planner_name",
+    "displayName", "display_name", "fullName", "full_name",
+    "doctorName", "doctor_name", "dentistName", "dentist_name",
+    "providerName", "provider_name", "doctor", "dentist",
+    "display", "title"
+  ];
+
+  const cleanKey = (value) => String(value || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const scalar = (value) =>
+    (typeof value === "string" || typeof value === "number") && String(value).trim()
+      ? String(value).trim()
+      : "";
+
+  function field(row, candidates) {
+    if (!row || typeof row !== "object" || Array.isArray(row)) return "";
+    const wanted = new Set(candidates.map(cleanKey));
+    for (const [key, value] of Object.entries(row)) {
+      if (wanted.has(cleanKey(key))) {
+        const found = scalar(value);
+        if (found) return found;
+      }
+    }
+    return "";
   }
 
-  const normalized = rows.map((row) => {
-    if (typeof row === "string") return { id: clean(row, 100), name: clean(row, 160) };
-    if (!row || typeof row !== "object") return null;
-    const id = clean(
-      row.planner || row.plannerId || row.planner_id || row.id ||
-      row.username || row.userId || row.user_id || row.code || "",
-      100
-    );
-    const name = clean(
-      row.name || row.label || row.plannerName || row.planner_name ||
-      row.displayName || row.display_name || row.fullName || row.full_name ||
-      row.doctorName || row.doctor_name || row.doctor || id,
-      160
-    );
-    return id ? { id, name: name || id } : null;
-  }).filter(Boolean);
+  function add(idValue, nameValue) {
+    const id = clean(idValue, 100);
+    const name = clean(nameValue || idValue, 160);
+    if (!id || !name) return;
+    if (!normalized.some((item) => item.id === id)) normalized.push({ id, name });
+  }
 
-  return normalized.filter((item, index) =>
-    normalized.findIndex((candidate) => candidate.id === item.id) === index
-  );
+  function looksLikeId(value) {
+    const text = String(value || "").trim();
+    return /^\d{1,12}$/.test(text) ||
+      /^[a-f0-9]{8}-[a-f0-9-]{20,}$/i.test(text) ||
+      /^(planner|doctor|dentist|provider|user|staff|calendar)[_-][a-z0-9_-]+$/i.test(text);
+  }
+
+  function visit(value, inPlannerCollection = false, mapKey = "", seen = new WeakSet()) {
+    if (value == null) return;
+
+    if (typeof value === "string" || typeof value === "number") {
+      const primitive = scalar(value);
+      if (inPlannerCollection && mapKey && primitive) {
+        if (looksLikeId(mapKey)) add(mapKey, primitive);
+        else if (looksLikeId(primitive)) add(primitive, mapKey);
+        else if (/^(dr\.?\s|doctor\s|dentist\s)/i.test(primitive)) add(mapKey, primitive);
+      } else if (inPlannerCollection && !mapKey && primitive) {
+        // Some Recordit responses return a bare list of planner identifiers.
+        add(primitive, primitive);
+      }
+      return;
+    }
+
+    if (typeof value !== "object") return;
+    if (seen.has(value)) return;
+    seen.add(value);
+
+    if (Array.isArray(value)) {
+      for (const item of value) visit(item, inPlannerCollection, "", seen);
+      return;
+    }
+
+    const id = field(value, idKeys);
+    const name = field(value, nameKeys);
+    const explicitPlannerId = Object.keys(value).some((key) =>
+      /planner|doctor|dentist|provider|calendar/i.test(key)
+    );
+    const role = field(value, ["role", "type", "category", "profession", "position"]);
+    const clinicianRole = /planner|doctor|dentist|physician|clinician|practitioner/i.test(role);
+    const isPlannerRow = Boolean(id && (name || inPlannerCollection || explicitPlannerId || clinicianRole));
+
+    if (isPlannerRow) add(id, name || id);
+
+    for (const [key, child] of Object.entries(value)) {
+      const normalizedKey = cleanKey(key);
+      if (collectionKeys.has(normalizedKey) || /^(available)?(planner|doctor|dentist)(list|items|data)$/i.test(normalizedKey)) {
+        visit(child, true, key, seen);
+      } else if (child && typeof child === "object") {
+        // Do not treat arbitrary properties on an already identified row as
+        // separate planners, but continue looking for nested planner collections.
+        visit(child, isPlannerRow ? false : inPlannerCollection, key, seen);
+      } else if (inPlannerCollection && !isPlannerRow) {
+        const primitive = scalar(child);
+        if (!primitive || /^(success|status|message|error|count|total|enabled|active|true|false)$/i.test(key + ":" + primitive)) {
+          continue;
+        }
+        if (looksLikeId(key)) add(key, primitive);
+        else if (looksLikeId(primitive)) add(primitive, key);
+        else if (/^(dr\.?\s|doctor\s|dentist\s)/i.test(primitive)) add(key, primitive);
+      }
+    }
+  }
+
+  visit(payload, rootIsPlannerCollection);
+  return normalized;
 }
 
 async function loadRecorditPlanners() {
-  const payload = await requestRecordit("available_planners");
-  const planners = normalizeRecorditPlanners(payload);
-  if (!planners.length) {
+  let availablePayload = null;
+  let availableError = null;
+  let settingsPayload = null;
+  let planners = [];
+
+  try {
+    availablePayload = await requestRecordit("available_planners");
+    planners = normalizeRecorditPlanners(availablePayload, true);
+  } catch (error) {
+    availableError = error;
+  }
+
+  // The two Recordit endpoints may return different response structures.
+  // Search access_settings recursively for the configured clinic planner roster,
+  // including nested arrays and ID-to-name maps, instead of only reading a
+  // top-level "planners" property.
+  let settingPlanners = [];
+  try {
+    settingsPayload = await requestRecordit("access_settings");
+    settingPlanners = normalizeRecorditPlanners(settingsPayload, true);
+  } catch {
+    // Preserve the usable list from available_planners if settings are restricted.
+  }
+
+  const mergedById = new Map();
+  for (const planner of [...planners, ...settingPlanners]) {
+    const prior = mergedById.get(planner.id);
+    if (!prior) {
+      mergedById.set(planner.id, planner);
+    } else if (planner.name && (!prior.name || prior.name === prior.id)) {
+      mergedById.set(planner.id, { ...prior, name: planner.name });
+    }
+  }
+
+  const merged = [...mergedById.values()];
+  if (!merged.length) {
     throw new RecorditRequestError(
-      "Recordit did not return a usable dentist list. The booking request is still saved.",
-      502,
+      availableError && availableError.message
+        ? availableError.message
+        : "Recordit did not return a usable dentist list. Check the account's planner access settings.",
+      availableError && availableError.statusCode ? availableError.statusCode : 502,
       false
     );
   }
 
-  // available_planners commonly returns the assignable planner IDs, while
-  // access_settings provides the clinic's planner ID-to-display-name mapping.
-  // Merge the settings roster as a fallback so configured clinic planners are
-  // not silently omitted when the endpoints return different subsets.
-  let nameByPlannerId = new Map();
-  let settingPlanners = [];
-  try {
-    const settings = await requestRecordit("access_settings");
-    settingPlanners = normalizeRecorditPlanners(settings);
-    nameByPlannerId = new Map(settingPlanners.map((planner) => [
-      planner.id,
-      planner.name
-    ]));
-  } catch {
-    // Keep the available planner list if Recordit settings cannot be loaded.
-  }
-
-  const merged = planners.map((planner) => ({
-    ...planner,
-    name: nameByPlannerId.get(planner.id) || planner.name || planner.id
-  }));
-  const knownIds = new Set(merged.map((planner) => planner.id));
-  for (const planner of settingPlanners) {
-    if (!knownIds.has(planner.id)) {
-      merged.push(planner);
-      knownIds.add(planner.id);
+  // Return safe shape diagnostics (keys and counts only, never values or secrets)
+  // so an unexpectedly incomplete roster can be diagnosed without exposing API data.
+  const topLevelKeys = (payload) =>
+    payload && typeof payload === "object" ? Object.keys(payload).slice(0, 40) : [];
+  return {
+    planners: merged,
+    diagnostics: {
+      availableCount: planners.length,
+      settingsCount: settingPlanners.length,
+      availableTopLevelKeys: topLevelKeys(availablePayload),
+      settingsTopLevelKeys: topLevelKeys(settingsPayload)
     }
-  }
-
-  return merged;
+  };
 }
 
 function recorditUtcDateTime(date, time) {
