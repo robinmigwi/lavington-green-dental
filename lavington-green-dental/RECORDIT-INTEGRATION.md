@@ -69,6 +69,8 @@ An Africa's Talking account, available SMS balance and any required sender ID ap
 
 This request-first workflow deliberately does not call Recordit's \`save_appointment\` endpoint because doing so would assign a dentist before the administrator has reviewed the request. \`RECORDIT_API_KEY\` and \`RECORDIT_API_BASE_URL\` are not used by the website request-save or admin-confirmation functions in this design. The administrator uses Recordit manually before confirming the request in the dashboard.
 
+- `RECORDIT_ADDITIONAL_PLANNERS` — optional JSON array of additional planner entries, each with a verified Recordit planner ID and display name, for example `[{"id":"REAL_PLANNER_ID_FROM_RECORDIT","name":"Dr Malit"}]`. Use only IDs verified in the target clinic's Recordit account. This is a fallback if the account's API endpoints omit a valid planner; it does not create a planner or grant permissions in Recordit. Configure it in Netlify Environment variables for the required deploy context.
+
 ## Preview test checklist
 
 1. Configure \`BOOKING_DATA_NAMESPACE=preview\` and a random \`BOOKING_ADMIN_TOKEN\` in the Deploy Previews context.
