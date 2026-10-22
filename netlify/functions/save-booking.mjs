@@ -172,16 +172,27 @@ export const handler = async (event) => {
 async function sendClinicEmail(booking) {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.BOOKING_EMAIL_FROM;
-  const recipients = String(process.env.BOOKING_NOTIFICATION_EMAIL || "")
+  const configuredRecipients = String(process.env.BOOKING_NOTIFICATION_EMAIL || "")
     .split(",").map((value) => value.trim()).filter(Boolean);
+  // Keep the configured clinic inboxes and also route every new request alert
+  // to the inbox the clinic checks most reliably.
+  const recipients = [...new Set([
+    ...configuredRecipients,
+    "lavingtongreendental@gmail.com"
+  ])];
 
   if (!apiKey || !from || !recipients.length) {
     return { configured: false, sent: false };
   }
 
   const subject = "New dental appointment request — " + booking.name;
-  const adminBaseUrl = String(process.env.DEPLOY_PRIME_URL || "").replace(/\/+$/, "");
-  const adminDashboardUrl = adminBaseUrl ? adminBaseUrl + "/admin-bookings.html" : "";
+  const configuredAdminUrl = String(process.env.BOOKING_ADMIN_DASHBOARD_URL || "").trim();
+  const adminBaseUrl = String(
+    process.env.DEPLOY_PRIME_URL || process.env.URL || ""
+  ).replace(/\/+$/, "");
+  const adminDashboardUrl = configuredAdminUrl
+    ? configuredAdminUrl.replace(/\/+$/, "")
+    : (adminBaseUrl ? adminBaseUrl + "/admin-bookings.html" : "");
   const text = [
     "A new appointment request has been received from the website.",
     "",
