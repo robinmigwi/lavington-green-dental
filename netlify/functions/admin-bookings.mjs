@@ -325,7 +325,13 @@ function normalizeRecorditPlanners(payload, rootIsPlannerCollection = false) {
     const text = String(value || "").trim();
     return /^\d{1,12}$/.test(text) ||
       /^[a-f0-9]{8}-[a-f0-9-]{20,}$/i.test(text) ||
-      /^(planner|doctor|dentist|provider|user|staff|calendar)[_-][a-z0-9_-]+$/i.test(text);
+      /^(planner|doctor|dentist|provider|user|staff|calendar)[_-]?[a-z0-9_-]+$/i.test(text);
+  }
+
+  function looksLikePersonName(value) {
+    const text = String(value || "").trim();
+    return /^(dr\.?\s|doctor\s|dentist\s|prof\.?\s)/i.test(text) ||
+      /^[\p{L}][\p{L}.'’\-]+(?:\s+[\p{L}][\p{L}.'’\-]+)+$/u.test(text);
   }
 
   function visit(value, inPlannerCollection = false, mapKey = "", seen = new WeakSet()) {
@@ -377,9 +383,13 @@ function normalizeRecorditPlanners(payload, rootIsPlannerCollection = false) {
         if (!primitive || /^(success|status|message|error|count|total|enabled|active|true|false)$/i.test(key + ":" + primitive)) {
           continue;
         }
-        if (looksLikeId(key)) add(key, primitive);
-        else if (looksLikeId(primitive)) add(primitive, key);
-        else if (/^(dr\.?\s|doctor\s|dentist\s)/i.test(primitive)) add(key, primitive);
+
+        // Recordit settings can expose either plannerId -> planner name or
+        // planner name -> plannerId maps. Avoid treating ordinary settings such
+        // as slotDuration as a clinician merely because they contain a number.
+        if (looksLikeId(key) && looksLikePersonName(primitive)) add(key, primitive);
+        else if (looksLikePersonName(key) && !looksLikePersonName(primitive)) add(primitive, key);
+        else if (looksLikeId(key) && /^(dr\.?\s|doctor\s|dentist\s)/i.test(primitive)) add(key, primitive);
       }
     }
   }
