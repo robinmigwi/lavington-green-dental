@@ -260,8 +260,8 @@ function trustedDashboardHost(headers) {
     hostname === "lavingtongreendental.co.ke" ||
     hostname === "www.lavingtongreendental.co.ke" ||
     hostname === "lavington-green-dental.netlify.app" ||
-    /^deploy-preview-\\d+--lavington-green-dental\\.netlify\\.app$/.test(hostname) ||
-    /^feature-recordit-booking-integration--lavington-green-dental\\.netlify\\.app$/.test(hostname);
+    /^deploy-preview-[0-9]+--lavington-green-dental[.]netlify[.]app$/.test(hostname) ||
+    /^feature-recordit-booking-integration--lavington-green-dental[.]netlify[.]app$/.test(hostname);
 
   return allowed ? hostname : "";
 }
