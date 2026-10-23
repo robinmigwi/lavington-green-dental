@@ -393,6 +393,7 @@ if (booking) {
     date: '',
     time: '',
     message: '',
+    confirmationChannel: 'sms',
     savedId: ''
   };
 
@@ -634,19 +635,33 @@ if (booking) {
       '<input class="booking-input chat-input" id="booking-phone-text" type="tel" autocomplete="tel" inputmode="tel" placeholder="0700 000 000">' +
       '<label for="booking-email-text">Email <span>optional</span></label>' +
       '<input class="booking-input chat-input" id="booking-email-text" type="email" autocomplete="email" placeholder="you@example.com">' +
+      '<label for="booking-confirmation-channel">How should we send your appointment confirmation?</label>' +
+      '<select class="booking-input chat-input" id="booking-confirmation-channel">' +
+      '<option value="sms">Text message (SMS) to my phone</option>' +
+      '<option value="email">Email</option></select>' +
+      '<p class="booking-note">The clinic will send confirmation only after your appointment has been allocated and confirmed.</p>' +
       '<div class="chat-send-row"><button class="btn btn-primary" type="button" data-chat-next>Continue</button></div></div>'
     );
     const phone = composer.querySelector('#booking-phone-text');
     const email = composer.querySelector('#booking-email-text');
+    const channel = composer.querySelector('#booking-confirmation-channel');
+    phone.value = state.phone || '';
+    email.value = state.email || '';
+    channel.value = state.confirmationChannel || 'sms';
     phone.focus();
     composer.querySelector('[data-chat-next]').addEventListener('click', () => {
       if (!phone.value.trim()) { inputError('Please add a phone number so the practice can reach you.'); return; }
-      if (email.value.trim() && !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email.value.trim())) {
+      if (email.value.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim())) {
         inputError('That email address does not look quite right.'); return;
+      }
+      if (channel.value === 'email' && !email.value.trim()) {
+        inputError('Add your email address or choose text message (SMS).'); return;
       }
       state.phone = phone.value.trim();
       state.email = email.value.trim();
-      addMessage('patient', 'Phone: ' + state.phone + (state.email ? ' · Email: ' + state.email : ''));
+      state.confirmationChannel = channel.value;
+      addMessage('patient', 'Phone: ' + state.phone + (state.email ? ' · Email: ' + state.email : '') +
+        ' · Confirmation by ' + (state.confirmationChannel === 'email' ? 'email' : 'SMS'));
       askFeeling();
     });
   };
@@ -676,25 +691,35 @@ if (booking) {
   const askDateTime = () => {
     state.stage = 'date';
     setComposer(
-      '<div class="chat-question"><div class="chat-mini-prompt">When would you like to come in?</div>' +
+      '<div class="chat-question"><div class="chat-mini-prompt">When would you prefer to visit?</div>' +
       '<div class="booking-date-grid">' +
       '<div><label for="booking-date-text">Preferred date</label><input class="booking-input chat-input" id="booking-date-text" type="date"></div>' +
-      '<div><label for="booking-time-text">Preferred time</label><select class="booking-input chat-input" id="booking-time-text"><option value="">Choose a time</option>' +
+      '<div><label for="booking-time-text">Preferred time</label><select class="booking-input chat-input" id="booking-time-text"><option value="">Choose a preferred time</option>' +
       ['9:00 am','9:30 am','10:00 am','10:30 am','11:00 am','11:30 am','12:00 pm','12:30 pm','1:00 pm','1:30 pm','2:00 pm','2:30 pm','3:00 pm','3:30 pm','4:00 pm','4:30 pm'].map(t => '<option>' + t + '</option>').join('') +
       '</select></div></div>' +
-      '<p class="booking-note">Your preferred time is a request. The practice will confirm the available appointment time.</p>' +
+      '<p class="booking-note">These are your preferences, not a confirmed appointment time. The clinic administrator will review your request and assign a dentist.</p>' +
       '<div class="chat-send-row"><button class="btn btn-primary" type="button" data-chat-next>Continue</button></div></div>'
     );
     const date = composer.querySelector('#booking-date-text');
     const time = composer.querySelector('#booking-time-text');
     const now = new Date();
     date.min = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().split('T')[0];
+    if (state.date) date.value = state.date;
+    if (state.time) time.value = state.time;
     date.focus();
+
     composer.querySelector('[data-chat-next]').addEventListener('click', () => {
-      if (!date.value || !time.value) { inputError('Choose a preferred date and time so we know when you would like to visit.'); return; }
+      if (!date.value || !time.value) {
+        inputError('Choose your preferred date and time to continue.');
+        return;
+      }
+      if (date.value < date.min) {
+        inputError('Please choose today or a future date.');
+        return;
+      }
       state.date = date.value;
       state.time = time.value;
-      addMessage('patient', formatDate(date.value) + ' at ' + time.value);
+      addMessage('patient', formatDate(date.value) + ' at ' + state.time + ' (preferred; awaiting clinic confirmation)');
       askNotes();
     });
   };
@@ -723,13 +748,14 @@ if (booking) {
 
   const showSummary = () => {
     state.stage = 'summary';
-    addMessage('assistant', 'Perfect. Here is what I have. Please check the details before sending your appointment request.');
+    addMessage('assistant', 'Perfect. Here is your request. Please check the details before sending it to the clinic.');
     const summaryCard = document.createElement('div');
     summaryCard.className = 'chat-summary';
     summaryCard.innerHTML =
       '<div><span>Starting point</span><strong>' + escape(state.suggestedVisit) + '</strong></div>' +
       '<div><span>Preferred date</span><strong>' + escape(formatDate(state.date)) + '</strong></div>' +
       '<div><span>Preferred time</span><strong>' + escape(state.time) + '</strong></div>' +
+      '<div><span>Confirmation by</span><strong>' + escape(state.confirmationChannel === 'email' ? 'Email' : 'SMS text message') + '</strong></div>' +
       '<div><span>How you are feeling</span><strong>' + escape(state.feeling) + '</strong></div>';
     thread.appendChild(summaryCard);
     const summaryName = document.createElement('div');
@@ -743,7 +769,7 @@ if (booking) {
       '<button class="btn btn-primary" type="submit" data-booking-submit>Request my appointment</button>' +
       '<button class="chat-secondary-button" type="button" data-action="edit-booking">I want to change something</button>' +
       '</div>' +
-      '<p class="booking-disclaimer">This is an appointment request, not a confirmed slot. The practice will review your preferred time and respond.</p>'
+      '<p class="booking-disclaimer">This is a request, not a confirmed booking. The clinic administrator will allocate a dentist in the clinic system and contact you using your chosen confirmation method.</p>'
     );
     composer.querySelector('[data-action="edit-booking"]').addEventListener('click', () => {
       addMessage('patient', 'I want to change something');
@@ -789,6 +815,7 @@ if (booking) {
           concern:state.concern,
           preferred_date:state.date,
           preferred_time:state.time,
+          confirmation_channel:state.confirmationChannel,
           feeling:state.feeling,
           message:state.message
         })
@@ -798,40 +825,22 @@ if (booking) {
         throw new Error(savedData.error || 'The appointment request could not be saved.');
       }
 
-      state.savedId = savedData.bookingId || '';
-      let whatsappSent = false;
-
-      try {
-        const whatsappResponse = await fetch('/.netlify/functions/send-booking-whatsapp', {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({
-            name:state.name,
-            phone:state.phone,
-            service:state.suggestedVisit || state.service,
-            preferred_date:state.date,
-            preferred_time:state.time,
-            feeling:state.feeling
-          })
-        });
-        const whatsappData = await whatsappResponse.json().catch(() => ({}));
-        whatsappSent = whatsappResponse.ok && whatsappData.sent === true;
-      } catch (error) {
-        whatsappSent = false;
-      }
+      state.savedId = savedData.requestId || savedData.bookingId || '';
+      const clinicAlerts = savedData.clinicNotifications || {};
+      const clinicAlertSent = clinicAlerts.email?.sent === true || clinicAlerts.whatsapp?.sent === true;
 
       thread.innerHTML = '';
       const success = document.createElement('div');
       success.className = 'booking-success show';
       success.innerHTML =
-        '<div class="booking-success-icon">✓</div>' +
         '<span class="eyebrow">Request received</span>' +
-        '<h3>You are on the list.</h3>' +
-        '<p>Your appointment request has been saved. The practice can now review what you need, your preferred time and how you are feeling before confirming the appointment.</p>' +
+        '<h3>Thank you, ' + escape(state.name.split(/\s+/)[0]) + '.</h3>' +
+        '<p>Your appointment request has been received by Lavington Green Dental Suite. The clinic administrator will review your preferred date and time, allocate a dentist in the clinic system, and confirm the appointment with you.</p>' +
         (state.savedId ? '<p class="booking-id-status">Request reference: ' + escape(state.savedId) + '</p>' : '') +
-        '<p class="booking-success-status">' +
-          (whatsappSent ? 'A WhatsApp message confirming your request has been sent to your number.' : 'WhatsApp confirmation is not connected yet. Your appointment request has still been saved.') +
-        '</p>';
+        '<p class="booking-success-status">Your appointment is not confirmed yet. We will contact you by ' +
+        escape(state.confirmationChannel === 'email' ? 'email' : 'SMS text message') +
+        ' after the clinic confirms it.</p>' +
+        (!clinicAlertSent ? '<p class="booking-success-status">The request is saved, but the clinic notification service is not confirmed as delivered yet. If you need help quickly, please contact the clinic directly.</p>' : '');
       thread.appendChild(success);
       composer.innerHTML = '';
     } catch (error) {
