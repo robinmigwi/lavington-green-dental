@@ -1,6 +1,6 @@
 [build]
   publish = "lavington-green-dental"
-  functions = "lavington-green-dental/netlify/functions"
+  functions = "netlify/functions"
 
 [build.environment]
   NODE_VERSION = "20"
