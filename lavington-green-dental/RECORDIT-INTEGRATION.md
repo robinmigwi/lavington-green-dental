@@ -5,21 +5,21 @@ This branch is designed for the case where Recordit does not provide a suitable 
 ## Workflow
 
 1. The patient completes the website concierge. They do not choose a dentist. They enter their contact details, service/concern, preferred date and time, and choose whether appointment confirmation should be sent by SMS or email.
-2. The \`save-booking\` Netlify Function saves the request to Netlify Blobs as \`pending_allocation\`. It does **not** create an appointment in Recordit.
-3. The clinic receives an email alert and a WhatsApp alert (when those channels are configured). Alerts include a request reference, patient contact, service and preferred date/time; the patient's concern and additional notes are not included in these alerts.
-4. The administrator opens the password-protected \`/admin-bookings.html\` dashboard and reviews the request. The administrator independently allocates the dentist and creates/confirms the actual appointment in Recordit.
-5. After the administrator verifies the Recordit appointment, they enter the assigned dentist, final date/time and Recordit event number in the dashboard, then tick the confirmation checkbox and submit. The server marks the request confirmed and sends the patient an SMS or email according to the patient's preference.
-6. If the patient notification fails, the request remains confirmed, the dashboard reports the failure, and the administrator can retry the notification. The retry does not create or change the appointment in Recordit.
+2. The `save-booking` Netlify Function saves the request to Netlify Blobs as `pending_allocation`. It does not create an appointment in Recordit at this stage.
+3. The clinic receives an email alert and a WhatsApp alert when those channels are configured. Alerts contain a request reference, patient contact, service and preferred date/time; the patient's concern and additional notes remain in the protected dashboard.
+4. The administrator opens the password-protected `/admin-bookings.html` dashboard, chooses an available dentist, and sets the final appointment date and time.
+5. On submission, the server calls Recordit's `save_appointment` endpoint. The dashboard stores the returned event number and whether Recordit reported the appointment as confirmed.
+6. If Recordit reports the appointment as confirmed, the system sends the patient's chosen SMS or email confirmation. If Recordit saved the appointment but did not mark it confirmed, the patient is not notified. The administrator must verify the appointment in Recordit and then confirm it in the dashboard.
+7. If the Recordit save result is uncertain, the request is paused to avoid a duplicate appointment. The administrator must check Recordit before taking further action. Patient notification failures can be retried without creating another appointment.
 
-The dashboard never creates or updates appointments in Recordit. Recordit remains the clinic's source of truth for the actual dentist allocation and confirmed appointment.
-
+Recordit remains the source of truth for the appointment status. The dashboard creates an appointment only when an administrator explicitly submits the dentist assignment.
 ## Netlify environment variables
 
 Configure these in **Project configuration > Environment variables**. They must be available to Netlify Functions at runtime. Use **Deploy Previews** for the initial sample-clinic tests and keep values/context separate from Production.
 
 ### Request data separation
 
-- \`BOOKING_DATA_NAMESPACE\` — set to \`preview\` for Deploy Previews and \`production\` for Production. The code defaults to \`preview\`; explicitly set \`production\` before publishing this workflow to the live site, to keep the preview request list separate from live requests.
+- \`BOOKING_DATA_NAMESPACE\` — optional override for nonproduction contexts. Netlify Production always uses the \`production\` namespace; Deploy Previews use the configured value or default to \`preview\`. This keeps preview test requests separate from live requests even when the variable is not set.
 - \`BOOKING_ADMIN_TOKEN\` — required for the private dashboard and administrator endpoint. Use a randomly generated secret of at least 32 characters. Set a different token for Deploy Previews and Production. This is **not** the Recordit API key.
 
 Requests are stored in the site-wide \`appointment-requests\` Netlify Blobs store and are separated by namespace prefix. The dashboard's API only lists records for its current namespace. The administrator token must never be written into the repository or shared in the browser URL.
@@ -67,22 +67,20 @@ An Africa's Talking account, available SMS balance and any required sender ID ap
 
 ### Recordit key
 
-This request-first workflow deliberately does not call Recordit's \`save_appointment\` endpoint because doing so would assign a dentist before the administrator has reviewed the request. \`RECORDIT_API_KEY\` and \`RECORDIT_API_BASE_URL\` are not used by the website request-save or admin-confirmation functions in this design. The administrator uses Recordit manually before confirming the request in the dashboard.
+- \`RECORDIT_API_KEY\` — API key for the target clinic's real Recordit account in Production and the intended test account in preview.
+- \`RECORDIT_API_BASE_URL\` — optional API base URL override. The default is \`https://api.recordit.ke/ai_assist\`.
+- \`RECORDIT_ADDITIONAL_PLANNERS\` — optional JSON array of additional clinician entries, each containing a verified Recordit planner ID and display name. Only use IDs confirmed in the target clinic's Recordit account. This does not create a planner or grant access in Recordit; it only provides a fallback if an endpoint omits a known, valid planner.
 
-- `RECORDIT_ADDITIONAL_PLANNERS` — optional JSON array of additional planner entries, each with a verified Recordit planner ID and display name, for example `[{"id":"REAL_PLANNER_ID_FROM_RECORDIT","name":"Dr Malit"}]`. Use only IDs verified in the target clinic's Recordit account. This is a fallback if the account's API endpoints omit a valid planner; it does not create a planner or grant permissions in Recordit. Configure it in Netlify Environment variables for the required deploy context.
-
+The admin endpoint uses the Recordit key to load available dentists and create appointments when the administrator submits an assignment. Never commit API keys to the repository.
 ## Preview test checklist
 
-1. Configure \`BOOKING_DATA_NAMESPACE=preview\` and a random \`BOOKING_ADMIN_TOKEN\` in the Deploy Previews context.
-2. Configure the Resend variables and the approved team WhatsApp template if testing clinic alerts.
-3. Configure Africa's Talking credentials if testing patient SMS confirmation.
-4. Open the Deploy Preview and submit a request using fictional details, choosing SMS or email as the patient confirmation method.
-5. Verify the website states that the request has been received and is **not confirmed**.
-6. Open \`/admin-bookings.html\` on the same preview host and sign in with the admin token. Confirm the new request appears under Pending dentist allocation.
-7. In the sample clinic, select a dentist and confirm the final date/time in the admin dashboard. Submit the assignment once.
-8. Verify the appointment appears under the selected planner in the sample Recordit clinic and that the dashboard displays the returned event number.
-9. If Recordit returns `confirmed: false`, verify that no patient message is sent. Do not resubmit the assignment, because that could create a duplicate appointment.
-10. If Recordit reports the appointment confirmed, verify the patient's chosen email/SMS notification. If notification delivery fails, configure the relevant provider and retry only the notification.
-11. Keep Production untouched until this whole preview workflow is verified.
+1. Configure \`BOOKING_ADMIN_TOKEN\` in the Deploy Previews context using a strong, randomly generated secret. Do not reuse a production token.
+2. Configure the Recordit key and the email and messaging provider credentials needed for the channels being tested.
+3. Submit one request with fictional patient details and confirm the website records it as pending, not confirmed.
+4. Open \`/admin-bookings.html\` on the same preview host and confirm the request appears under Pending dentist allocation.
+5. Select a dentist, choose a future date/time and submit once. Verify the appointment appears under the selected planner in the Recordit account and the dashboard records its event number.
+6. If Recordit does not report the appointment as confirmed, verify that no patient confirmation is sent. If the save status is uncertain, check Recordit before doing anything else to avoid duplicates.
+7. Verify the booking alerts arrive at both clinic inboxes and the link opens the same deployment host that received the request.
+8. Before live release, verify the real clinic API key, a fresh independent production admin token, production email sender/recipients, and both dentists' planner access.
 
-Use only fictional patient data for preview tests. Do not paste API tokens into GitHub, website JavaScript, or support messages.
+Use only fictional patient data for preview tests. Do not paste API tokens into GitHub, website JavaScript, emails, or support messages.
