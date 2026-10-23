@@ -1,7 +1,11 @@
 import { connectLambda, getStore } from "@netlify/blobs";
 
 const STORE_NAME = "appointment-requests";
-const NAMESPACE = safeNamespace(process.env.BOOKING_DATA_NAMESPACE || "preview");
+const NAMESPACE = safeNamespace(
+  process.env.CONTEXT === "production"
+    ? "production"
+    : (process.env.BOOKING_DATA_NAMESPACE || "preview")
+);
 const REQUEST_PREFIX = "request-" + NAMESPACE + "-";
 
 export const handler = async (event) => {
